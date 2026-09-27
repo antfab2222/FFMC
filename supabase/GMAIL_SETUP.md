@@ -40,6 +40,42 @@ Les deux tables de connexion n’accordent aucun accès à `anon` ou `authentica
 Aucun jeton Google ne revient dans le navigateur ni dans les publications au CA.
 Pour révoquer l’accès, utiliser les connexions tierces du compte Google.
 
-Cette étape prépare **uniquement la connexion**. L’import des mails, les analyses IA,
-les tâches planifiées et l’envoi de réponses ne sont pas encore implémentés.
-Le fonctionnement réel OAuth doit être testé après ajout du secret et consentement Google.
+## Import et analyse privée
+
+Appliquer `mail-assistant.sql` une fois, puis déployer `functions/mail-assistant/index.ts`
+avec `content.ts` et `../gmail-connect/crypto.ts`, `verify_jwt=true`.
+Le serveur vérifie aussi la session et le rôle coordinateur pour chaque action.
+
+Dans **Courrier privé**, cliquer **Importer les mails**. Le premier import couvre les
+30 derniers jours, par pages de 20. Continuer avec **Importer la page suivante** si proposé.
+Les imports suivants récupèrent les nouveaux échanges avec un chevauchement d’un jour ;
+les identifiants Gmail empêchent les doublons. Les pièces jointes ne sont pas téléchargées.
+Le texte conservé est limité à 30 000 caractères par mail ; les extraits tronqués sont signalés.
+
+Pour activer l’IA, ajouter dans Supabase → Edge Functions → Secrets :
+
+- `OPENAI_API_KEY` : une clé du compte API OpenAI disposant de crédit.
+- `MAIL_AI_ENABLED` : `true` pour activer explicitement les appels facturables.
+
+Ne jamais mettre la clé dans GitHub, une variable VITE_, une capture ou le chat.
+La facturation API est distincte de l’abonnement ChatGPT. Fixer également un budget côté API.
+Supprimer le drapeau ou le passer à `false` désactive l’analyse sans bloquer l’import.
+
+Le modèle `gpt-4.1-mini-2025-04-14` reçoit le sujet, l’expéditeur, la date, jusqu’à
+12 000 caractères du mail et deux échanges antérieurs importés (2 000 caractères chacun).
+Les appels utilisent `store:false`. Le texte des mails est transmis à OpenAI seulement
+lorsque l’analyse est activée et lancée. Plafond serveur : 20 tentatives par jour UTC,
+y compris les erreurs. Les propositions restent privées et doivent être vérifiées.
+
+Les filtres regroupent les sujets et les actions proposées : À débattre, À répondre,
+À partager, Pour information. Préparer un dossier ou un partage ouvre un formulaire
+à relire et valider. Aucun mail n’est envoyé, aucune publication n’est automatique.
+L’actualisation facultative toutes les cinq minutes fonctionne uniquement lorsque cet
+écran reste ouvert ; aucune tâche de fond n’est installée pour le site fermé.
+
+## Vérifications
+
+`npm run build`, `node tests/gmail-security.mjs` et `node tests/mail-content.mjs`.
+Tester ensuite avec le coordinateur : import, pagination, absence de doublons, activation
+IA et relecture. Vérifier qu’un membre du CA ne peut lire `ca_mail_messages`, même par API.
+Les tables de connexion et de consommation IA restent accessibles au serveur seulement.

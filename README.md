@@ -77,7 +77,15 @@ Le chemin par défaut est `/FFMC/`. La variable `PAGES_BASE_PATH` permet de le m
 
 ## Connexion Gmail et messagerie
 
-La connexion OAuth Gmail est préparée dans `supabase/functions/gmail-connect`. Voir `supabase/GMAIL_SETUP.md` pour le secret, la redirection Google et les limites. La synchronisation et le tri automatiques des mails ainsi que leur envoi au CA ne sont pas actifs. L’écran Courrier privé sert à saisir/classer les mails et leurs réponses. Les partages validés sont consultables dans l’intranet ; leur publication n’envoie pas de message externe. La messagerie (Gmail, Outlook, OVH…) doit être précisée pour développer la connexion côté serveur. Les mots de passe de messagerie et jetons OAuth ne doivent jamais être intégrés à GitHub Pages. Toute future connexion devra préserver la validation humaine avant diffusion.
+Gmail est connecté côté serveur pour `coordinateur.ffmc06@gmail.com`. Le coordinateur
+peut importer les mails et consulter leurs analyses privées : sujet, résumé, priorité,
+points à débattre et brouillon de réponse. L’IA nécessite une clé API OpenAI et une activation
+explicite ; elle est limitée à 20 tentatives par jour. Voir `supabase/GMAIL_SETUP.md`.
+
+Les membres du CA voient uniquement les publications relues et validées. Les brouillons
+ne sont jamais envoyés automatiquement. L’accès Gmail est en lecture seule. Le rafraîchissement
+facultatif fonctionne tant que l’écran reste ouvert, sans tâche de fond lorsque le site est fermé.
+Les clés et jetons restent côté Supabase, jamais dans GitHub Pages.
 
 ## Références
 
