@@ -54,16 +54,16 @@ Le texte conservé est limité à 30 000 caractères par mail ; les extraits tro
 
 Pour activer l’IA, ajouter dans Supabase → Edge Functions → Secrets :
 
-- `OPENAI_API_KEY` : une clé du compte API OpenAI disposant de crédit.
-- `MAIL_AI_ENABLED` : `true` pour activer explicitement les appels facturables.
+- `GEMINI_API_KEY` : une clé API Google AI Studio du projet en offre Free.
+- `MAIL_AI_ENABLED` : `true` pour activer explicitement l’analyse Gemini.
 
 Ne jamais mettre la clé dans GitHub, une variable VITE_, une capture ou le chat.
-La facturation API est distincte de l’abonnement ChatGPT. Fixer également un budget côté API.
+Conserver le projet Google AI Studio en offre Free, sans activer Cloud Billing. Le site ne peut pas vérifier le statut de facturation du projet : si la facturation est activée chez Google, des frais sont possibles. Les quotas gratuits sont ceux du projet et peuvent varier. Aucun repli vers OpenAI ou autre fournisseur payant.
 Supprimer le drapeau ou le passer à `false` désactive l’analyse sans bloquer l’import.
 
-Le modèle `gpt-4.1-mini-2025-04-14` reçoit le sujet, l’expéditeur, la date, jusqu’à
+Le modèle `gemini-3.5-flash-lite` reçoit le sujet, l’expéditeur, la date, jusqu’à
 12 000 caractères du mail et deux échanges antérieurs importés (2 000 caractères chacun).
-Les appels utilisent `store:false`. Le texte des mails est transmis à OpenAI seulement
+Le texte des mails est transmis à Google Gemini seulement
 lorsque l’analyse est activée et lancée. Plafond serveur : 20 tentatives par jour UTC,
 y compris les erreurs. Les propositions restent privées et doivent être vérifiées.
 
@@ -79,3 +79,5 @@ L’actualisation facultative toutes les cinq minutes fonctionne uniquement lors
 Tester ensuite avec le coordinateur : import, pagination, absence de doublons, activation
 IA et relecture. Vérifier qu’un membre du CA ne peut lire `ca_mail_messages`, même par API.
 Les tables de connexion et de consommation IA restent accessibles au serveur seulement.
+
+Le compteur quotidien existant est conservé lors du passage à Gemini, y compris les tentatives OpenAI précédentes. La clé OPENAI_API_KEY n’est plus utilisée et peut être supprimée des secrets.
