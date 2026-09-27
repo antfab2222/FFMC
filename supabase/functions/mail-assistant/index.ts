@@ -1,6 +1,6 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.117.2';
 import {decryptToken} from '../gmail-connect/crypto.ts';
-import {normalizeMessage} from './content.ts';
+import {normalizeMessage,categories,topics} from './content.ts';
 import {analyzeMail,GeminiError} from './gemini.ts';
 const CLIENT_ID='533703714987-tmhpt6kpfg1qa2a9ggav54lo1rv5st7r.apps.googleusercontent.com';
 const ORIGIN='https://antfab2222.github.io';
@@ -35,6 +35,12 @@ Deno.serve(async(req:Request)=>{
    const {data:{user},error}=await db.auth.getUser(auth.slice(7));if(error||!user)return json({error:'Session expirée.'},401);
    const member=check(await db.from('ca_members').select('user_id').eq('user_id',user.id).eq('role','coordinateur').maybeSingle());if(!member)return json({error:'Réservé au coordinateur.'},403);
   }
+  if(action==='file'){
+   if(typeof input.id!=='string'||!/^[a-f0-9]+$/i.test(input.id)||!categories.includes(input.category)||!topics.includes(input.topic))throw new SafeError('Classement invalide.');
+   const saved=check(await db.from('ca_mail_messages').update({mail_category:input.category,mail_topic:input.topic,filing_source:'manual'}).eq('id',input.id).select('id').maybeSingle());
+   if(!saved)throw new SafeError('Mail introuvable.',404);
+   return json({saved:true});
+  }
   if(action==='schedule'){
    if(typeof input.enabled!=='boolean')throw new SafeError('Réglage invalide.');
    check(await db.from('ca_gmail_connections').update({auto_enabled:input.enabled}).eq('id','primary'));
@@ -45,7 +51,7 @@ Deno.serve(async(req:Request)=>{
   const day=new Date().toISOString().slice(0,10);const dailyLimit=20;
   if(input.action==='status'){
    const usage=check(await db.from('ca_mail_ai_usage').select('attempts').eq('day',day).maybeSingle());
-   const pending=await db.from('ca_mail_messages').select('id',{count:'exact',head:true}).is('analysis',null).is('reviewed_at',null);check(pending);
+   const pending=await db.from('ca_mail_messages').select('id',{count:'exact',head:true}).is('analysis',null);check(pending);
    const connection=check(await db.from('ca_gmail_connections').select('last_sync,sync_page_token,auto_enabled,auto_last_run,ai_pause_until,ai_error,sync_error').eq('id','primary').maybeSingle());
    return json({autoEnabled:connection?.auto_enabled||false,autoLastRun:connection?.auto_last_run,aiPauseUntil:connection?.ai_pause_until,aiError:connection?.ai_error,syncError:connection?.sync_error,aiEnabled,aiConfigured:Boolean(apiKey),pending:pending.count,remainingToday:Math.max(0,dailyLimit-(usage?.attempts||0)),lastSync:connection?.last_sync,hasMore:Boolean(connection?.sync_page_token)});
   }
@@ -76,14 +82,14 @@ Deno.serve(async(req:Request)=>{
   }
   const usage=check(await db.from('ca_mail_ai_usage').select('attempts').eq('day',day).maybeSingle());let attempts=usage?.attempts||0;
   if(attempts>=dailyLimit)throw new SafeError('Limite de 20 analyses atteinte aujourd’hui. Reprenez demain.',429);
-  const messages=check(await db.from('ca_mail_messages').select('*').is('analysis',null).is('reviewed_at',null).order('sent_at',{ascending:false}).limit(Math.min(3,dailyLimit-attempts)));
+  const messages=check(await db.from('ca_mail_messages').select('*').is('analysis',null).order('sent_at',{ascending:false}).limit(Math.min(3,dailyLimit-attempts)));
   let analyzed=0;
   for(const m of messages){
    const history=check(await db.from('ca_mail_messages').select('subject,sender,sent_at,direction,body').eq('thread_id',m.thread_id).lt('sent_at',m.sent_at).order('sent_at',{ascending:false}).limit(2));
    const context=history.reverse().map((x:any)=>({...x,body:x.body.slice(0,2000)}));
    check(await db.from('ca_mail_ai_usage').upsert({day,attempts:++attempts}));
    const analysis=await analyzeMail(apiKey!,{today:day,message:{subject:m.subject,sender:m.sender,date:m.sent_at,direction:m.direction,body:m.body.slice(0,12000),truncated:m.truncated||m.body.length>12000},previous:context,attachments_read:false});
-   check(await db.from('ca_mail_messages').update({analysis,analyzed_at:new Date().toISOString(),reviewed_at:new Date().toISOString(),review_source:'gemini'}).eq('id',m.id).is('analysis',null).is('reviewed_at',null));analyzed++;
+   check(await db.from('ca_mail_messages').update({analysis,analyzed_at:new Date().toISOString(),reviewed_at:new Date().toISOString(),review_source:'gemini'}).eq('id',m.id).is('analysis',null));analyzed++;
   }
   check(await db.from('ca_gmail_connections').update({ai_error:null,ai_pause_until:null}).eq('id','primary'));
   return json({analyzed,remainingToday:dailyLimit-attempts});
