@@ -43,7 +43,7 @@ Pour révoquer l’accès, utiliser les connexions tierces du compte Google.
 ## Import et analyse privée
 
 Appliquer `mail-assistant.sql` une fois, puis déployer `functions/mail-assistant/index.ts`
-avec `content.ts` et `../gmail-connect/crypto.ts`, `verify_jwt=true`.
+avec `content.ts` et `../gmail-connect/crypto.ts`, `verify_jwt=false` (authentification vérifiée dans la fonction : JWT coordinateur ou jeton de tâche à usage unique).
 Le serveur vérifie aussi la session et le rôle coordinateur pour chaque action.
 
 Dans **Courrier privé**, cliquer **Importer les mails**. Le premier import couvre les
@@ -70,8 +70,23 @@ y compris les erreurs. Les propositions restent privées et doivent être vérif
 Les filtres regroupent les sujets et les actions proposées : À débattre, À répondre,
 À partager, Pour information. Préparer un dossier ou un partage ouvre un formulaire
 à relire et valider. Aucun mail n’est envoyé, aucune publication n’est automatique.
-L’actualisation facultative toutes les cinq minutes fonctionne uniquement lorsque cet
-écran reste ouvert ; aucune tâche de fond n’est installée pour le site fermé.
+La surveillance serveur utilise pg_cron et pg_net. Appliquer `mail-scheduler.sql` après
+`mail-assistant.sql`, déployer la fonction actualisée puis activer depuis Courrier privé.
+Import toutes les cinq minutes ; analyse deux minutes après, par lots de trois.
+Les imports historiques sont paginés à raison d’une page par passage.
+Le compteur reste limité à 20 tentatives/jour UTC. Le bouton Suspendre arrête les prochains
+passages ; un traitement déjà démarré peut finir. Le service dépend de la disponibilité
+Supabase/Google et d’une autorisation Gmail valide ; ce n’est pas une garantie de délai.
+
+Chaque appel planifié utilise un jeton aléatoire 256 bits, limité à une action, expirant
+en cinq minutes et consommé atomiquement. Seule son empreinte reste en base. La table
+est réservée au serveur, et la fonction SQL d’envoi est réservée au propriétaire postgres.
+La fonction Edge revérifie le rôle du coordinateur ayant connecté Gmail. Aucun secret
+permanent n’est présent dans le code ou le texte des tâches cron.
+Les erreurs Gemini suspendent les analyses automatiques une heure (24 heures pour 402).
+Corriger la clé puis lancer une analyse manuelle permet de lever la pause si elle réussit.
+L’erreur est affichée dans Courrier privé. L’import continue pendant la pause de l’IA.
+L’historique technique de ces tâches est conservé une semaine.
 
 ## Vérifications
 
@@ -81,3 +96,5 @@ IA et relecture. Vérifier qu’un membre du CA ne peut lire `ca_mail_messages`,
 Les tables de connexion et de consommation IA restent accessibles au serveur seulement.
 
 Le compteur quotidien existant est conservé lors du passage à Gemini, y compris les tentatives OpenAI précédentes. La clé OPENAI_API_KEY n’est plus utilisée et peut être supprimée des secrets.
+
+Le schéma interne `net` de pg_net ne doit pas être ajouté aux schémas exposés de la Data API. Sa file HTTP contient temporairement le jeton limité à une seule tâche (aucune clé service_role permanente). Les tables pg_net sont gérées par Supabase.

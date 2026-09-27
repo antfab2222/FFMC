@@ -4,4 +4,5 @@
 verify_jwt = false
 
 [functions.mail-assistant]
-verify_jwt = true
+# Handler authenticates user JWT + coordinator role, or single-use scoped cron token.
+verify_jwt = false

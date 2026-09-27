@@ -83,8 +83,7 @@ points à débattre et brouillon de réponse. L’IA nécessite une clé API Gem
 explicite ; elle est limitée à 20 tentatives par jour. Voir `supabase/GMAIL_SETUP.md`.
 
 Les membres du CA voient uniquement les publications relues et validées. Les brouillons
-ne sont jamais envoyés automatiquement. L’accès Gmail est en lecture seule. Le rafraîchissement
-facultatif fonctionne tant que l’écran reste ouvert, sans tâche de fond lorsque le site est fermé.
+ne sont jamais envoyés automatiquement. L’accès Gmail est en lecture seule. La surveillance serveur peut fonctionner même site fermé : import toutes les cinq minutes et analyse par lots, dans les quotas disponibles. Elle se suspend depuis Courrier privé. Voir `supabase/mail-scheduler.sql`.
 Les clés et jetons restent côté Supabase, jamais dans GitHub Pages.
 
 ## Références
