@@ -7,7 +7,8 @@ Application React prévue pour GitHub Pages, avec connexion et données partagé
 - Dossiers et actions : référent, statut, notes, prochaine étape, échéance.
 - Réunions : ordre du jour modifiable, points importants et décisions.
 - Calendrier mensuel et échéances.
-- Courrier : saisie manuelle, classement et export d’une synthèse à relire.
+- Courrier : import Gmail, analyse Gemini, classement et propositions à relire.
+- Actualités privées : bilan, suivi des sujets, newsletters par mois et veille web sourcée.
 - Connexion par lien reçu par mail et liste des membres autorisés côté base.
 - Protection contre l’écrasement d’une modification faite par un autre membre.
 - Déploiement GitHub Pages via Actions.

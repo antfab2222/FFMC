@@ -45,7 +45,7 @@ Deno.serve(async(req:Request)=>{
   const day=new Date().toISOString().slice(0,10);const dailyLimit=20;
   if(input.action==='status'){
    const usage=check(await db.from('ca_mail_ai_usage').select('attempts').eq('day',day).maybeSingle());
-   const pending=await db.from('ca_mail_messages').select('id',{count:'exact',head:true}).is('analysis',null);check(pending);
+   const pending=await db.from('ca_mail_messages').select('id',{count:'exact',head:true}).is('analysis',null).is('reviewed_at',null);check(pending);
    const connection=check(await db.from('ca_gmail_connections').select('last_sync,sync_page_token,auto_enabled,auto_last_run,ai_pause_until,ai_error,sync_error').eq('id','primary').maybeSingle());
    return json({autoEnabled:connection?.auto_enabled||false,autoLastRun:connection?.auto_last_run,aiPauseUntil:connection?.ai_pause_until,aiError:connection?.ai_error,syncError:connection?.sync_error,aiEnabled,aiConfigured:Boolean(apiKey),pending:pending.count,remainingToday:Math.max(0,dailyLimit-(usage?.attempts||0)),lastSync:connection?.last_sync,hasMore:Boolean(connection?.sync_page_token)});
   }
@@ -65,25 +65,25 @@ Deno.serve(async(req:Request)=>{
    const profile=await gmail('profile');if(profile?.emailAddress?.toLowerCase()!=='coordinateur.ffmc06@gmail.com')throw new SafeError('Boîte Gmail inattendue.',403);
    const started=connection.sync_started||Math.floor(Date.now()/1000);
    const since=connection.sync_since||started-30*86400;
-   const query=new URLSearchParams({q:`after:${since} before:${started+1} -in:chats -in:drafts`,maxResults:'20',includeSpamTrash:'false'});
+   const query=new URLSearchParams({q:`after:${since} before:${started+1} -in:chats -in:drafts`,maxResults:'50',includeSpamTrash:'false'});
    if(connection.sync_page_token)query.set('pageToken',connection.sync_page_token);
    const listing=await gmail('messages?'+query);if(!listing)throw new SafeError('Liste Gmail indisponible.',502);
    const messages=listing.messages||[];let imported=0;
-   for(let i=0;i<messages.length;i+=4){const chunk=await Promise.all(messages.slice(i,i+4).map(async(m:any)=>{if(!/^[a-f\d]+$/i.test(m.id))throw new SafeError('Réponse Gmail invalide.',502);return gmail('messages/'+m.id+'?format=full');}));const rows=chunk.filter(Boolean).map(normalizeMessage);if(rows.length){const saved=check(await db.from('ca_mail_messages').upsert(rows,{onConflict:'id',ignoreDuplicates:true}).select('id'));imported+=saved.length;}}
+   for(let i=0;i<messages.length;i+=10){const chunk=await Promise.all(messages.slice(i,i+10).map(async(m:any)=>{if(!/^[a-f\d]+$/i.test(m.id))throw new SafeError('Réponse Gmail invalide.',502);return gmail('messages/'+m.id+'?format=full');}));const rows=chunk.filter(Boolean).map(normalizeMessage);if(rows.length){const saved=check(await db.from('ca_mail_messages').upsert(rows,{onConflict:'id',ignoreDuplicates:true}).select('id'));imported+=saved.length;}}
    const hasMore=Boolean(listing.nextPageToken);
    check(await db.from('ca_gmail_connections').update({sync_error:null,sync_page_token:listing.nextPageToken||null,sync_started:hasMore?started:null,sync_since:hasMore?since:started-86400,last_sync:new Date().toISOString()}).eq('id','primary').eq('lock_owner',lockOwner));
    return json({imported,hasMore,aiEnabled});
   }
   const usage=check(await db.from('ca_mail_ai_usage').select('attempts').eq('day',day).maybeSingle());let attempts=usage?.attempts||0;
   if(attempts>=dailyLimit)throw new SafeError('Limite de 20 analyses atteinte aujourd’hui. Reprenez demain.',429);
-  const messages=check(await db.from('ca_mail_messages').select('*').is('analysis',null).order('sent_at',{ascending:false}).limit(Math.min(3,dailyLimit-attempts)));
+  const messages=check(await db.from('ca_mail_messages').select('*').is('analysis',null).is('reviewed_at',null).order('sent_at',{ascending:false}).limit(Math.min(3,dailyLimit-attempts)));
   let analyzed=0;
   for(const m of messages){
    const history=check(await db.from('ca_mail_messages').select('subject,sender,sent_at,direction,body').eq('thread_id',m.thread_id).lt('sent_at',m.sent_at).order('sent_at',{ascending:false}).limit(2));
    const context=history.reverse().map((x:any)=>({...x,body:x.body.slice(0,2000)}));
    check(await db.from('ca_mail_ai_usage').upsert({day,attempts:++attempts}));
    const analysis=await analyzeMail(apiKey!,{today:day,message:{subject:m.subject,sender:m.sender,date:m.sent_at,direction:m.direction,body:m.body.slice(0,12000),truncated:m.truncated||m.body.length>12000},previous:context,attachments_read:false});
-   check(await db.from('ca_mail_messages').update({analysis,analyzed_at:new Date().toISOString()}).eq('id',m.id).is('analysis',null));analyzed++;
+   check(await db.from('ca_mail_messages').update({analysis,analyzed_at:new Date().toISOString(),reviewed_at:new Date().toISOString(),review_source:'gemini'}).eq('id',m.id).is('analysis',null).is('reviewed_at',null));analyzed++;
   }
   check(await db.from('ca_gmail_connections').update({ai_error:null,ai_pause_until:null}).eq('id','primary'));
   return json({analyzed,remainingToday:dailyLimit-attempts});

@@ -47,7 +47,7 @@ avec `content.ts` et `../gmail-connect/crypto.ts`, `verify_jwt=false` (authentif
 Le serveur vérifie aussi la session et le rôle coordinateur pour chaque action.
 
 Dans **Courrier privé**, cliquer **Importer les mails**. Le premier import couvre les
-30 derniers jours, par pages de 20. Continuer avec **Importer la page suivante** si proposé.
+30 derniers jours, par pages de 50. Continuer avec **Importer la page suivante** si proposé.
 Les imports suivants récupèrent les nouveaux échanges avec un chevauchement d’un jour ;
 les identifiants Gmail empêchent les doublons. Les pièces jointes ne sont pas téléchargées.
 Le texte conservé est limité à 30 000 caractères par mail ; les extraits tronqués sont signalés.
@@ -98,3 +98,28 @@ Les tables de connexion et de consommation IA restent accessibles au serveur seu
 Le compteur quotidien existant est conservé lors du passage à Gemini, y compris les tentatives OpenAI précédentes. La clé OPENAI_API_KEY n’est plus utilisée et peut être supprimée des secrets.
 
 Le schéma interne `net` de pg_net ne doit pas être ajouté aux schémas exposés de la Data API. Sa file HTTP contient temporairement le jeton limité à une seule tâche (aucune clé service_role permanente). Les tables pg_net sont gérées par Supabase.
+
+## Actualités et reprise de l’historique
+
+Appliquer `news-and-review.sql`, puis `news-mail-updates.sql`, après les migrations précédentes.
+Déployer ensuite la version courante de mail-assistant (index.ts, content.ts, gemini.ts et crypto.ts).
+`reviewed_at` exclut de Gemini les messages déjà examinés dans un bilan humain.
+Une reprise historique se fait côté administrateur : régler la borne de synchronisation,
+laisser finir la pagination, rédiger le bilan privé puis marquer uniquement les IDs examinés.
+Ne jamais stocker de mail, rapport privé ou identifiant de connexion dans le dépôt public.
+
+Actualités comporte le bilan, le suivi, les newsletters filtrables par mois et la veille web.
+Les analyses de nouveaux mails importants ou proposant une action créent une entrée datée
+avec le lien Gmail. Le déclencheur SQL est transactionnel et déduplique par ID du mail ;
+il ne remplace pas les notes humaines. Les fiches se modifient avec contrôle de concurrence.
+Les publications au CA nécessitent toujours une relecture et une validation.
+
+La recherche web quotidienne est une tâche ChatGPT distincte du cron Gmail, programmée
+le matin autour de 8 h Europe/Paris. Elle écrit une synthèse sourcée privée dans ca_news_items,
+avec une clé de dédoublonnage par date, sans écraser les fiches existantes. Elle dépend du
+maintien des accès de la tâche à Supabase et à la recherche web. Sa pause se gère dans les
+tâches ChatGPT ; Suspendre dans Courrier privé concerne uniquement l’import et Gemini.
+Les recherches ne doivent pas présenter une proposition associative comme une loi adoptée.
+
+Test de la confidentialité et des mises à jour : `tests/news-access.sql` dans une transaction
+administrateur (fixtures annulées par ROLLBACK). Aucun appel Gemini n’est nécessaire au test.
