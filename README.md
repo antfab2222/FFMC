@@ -75,9 +75,9 @@ npm run build
 
 Le chemin par défaut est `/FFMC/`. La variable `PAGES_BASE_PATH` permet de le modifier ; le workflow récupère automatiquement le chemin du site GitHub Pages.
 
-## Messagerie : étape restante
+## Connexion Gmail et messagerie
 
-La synchronisation et le tri automatiques des mails ainsi que leur envoi au CA ne sont pas actifs. L’écran Courrier privé sert à saisir/classer les mails et leurs réponses. Les partages validés sont consultables dans l’intranet ; leur publication n’envoie pas de message externe. La messagerie (Gmail, Outlook, OVH…) doit être précisée pour développer la connexion côté serveur. Les mots de passe de messagerie et jetons OAuth ne doivent jamais être intégrés à GitHub Pages. Toute future connexion devra préserver la validation humaine avant diffusion.
+La connexion OAuth Gmail est préparée dans `supabase/functions/gmail-connect`. Voir `supabase/GMAIL_SETUP.md` pour le secret, la redirection Google et les limites. La synchronisation et le tri automatiques des mails ainsi que leur envoi au CA ne sont pas actifs. L’écran Courrier privé sert à saisir/classer les mails et leurs réponses. Les partages validés sont consultables dans l’intranet ; leur publication n’envoie pas de message externe. La messagerie (Gmail, Outlook, OVH…) doit être précisée pour développer la connexion côté serveur. Les mots de passe de messagerie et jetons OAuth ne doivent jamais être intégrés à GitHub Pages. Toute future connexion devra préserver la validation humaine avant diffusion.
 
 ## Références
 
