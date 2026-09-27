@@ -10,11 +10,13 @@ reset role;
 do $$ begin
  if (select count(*) from public.ca_news_items where dedupe_key='gmail:000000000000aa01')<>1 then raise exception 'Missing automatic update'; end if;
  if exists(select 1 from public.ca_news_items where dedupe_key='gmail:000000000000aa02') then raise exception 'Noise added to news'; end if;
+ if has_table_privilege('authenticated','public.ca_news_watch','update') or has_table_privilege('anon','public.ca_news_watch','select') then raise exception 'Watch state exposed for writing'; end if;
  if has_table_privilege('anon','public.ca_news_items','select') then raise exception 'Anonymous access'; end if;
 end $$;
 select set_config('request.jwt.claim.sub',(select user_id::text from public.ca_members where role='coordinateur' limit 1),true);
 set local role authenticated;
 do $$ declare n integer; begin
+ if not exists(select 1 from public.ca_news_watch where id='primary') then raise exception 'Coordinator cannot read watch state'; end if;
  update public.ca_news_items set progress='Human note' where dedupe_key='gmail:000000000000aa01';
  get diagnostics n=row_count;
  if n<>1 then raise exception 'Coordinator cannot edit'; end if;
@@ -29,6 +31,7 @@ end $$;
 update public.ca_members set role='membre' where user_id=current_setting('request.jwt.claim.sub')::uuid;
 set local role authenticated;
 do $$ declare n integer; begin
+ if exists(select 1 from public.ca_news_watch) then raise exception 'Member reads watch state'; end if;
  if exists(select 1 from public.ca_news_items) then raise exception 'Member reads private news'; end if;
  update public.ca_news_items set progress='Unauthorized';
  get diagnostics n=row_count;

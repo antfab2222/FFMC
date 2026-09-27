@@ -114,9 +114,14 @@ avec le lien Gmail. Le déclencheur SQL est transactionnel et déduplique par ID
 il ne remplace pas les notes humaines. Les fiches se modifient avec contrôle de concurrence.
 Les publications au CA nécessitent toujours une relecture et une validation.
 
-La recherche web quotidienne est une tâche ChatGPT distincte du cron Gmail, programmée
-le matin autour de 8 h Europe/Paris. Elle écrit une synthèse sourcée privée dans ca_news_items,
-avec une clé de dédoublonnage par date, sans écraser les fiches existantes. Elle dépend du
+La recherche web est une tâche ChatGPT distincte du cron Gmail, programmée toutes les heures.
+Elle ajoute seulement les nouveautés sourcées dans ca_news_items, avec des clés stables par
+source et événement, sans écraser les fiches existantes. Appliquer aussi news-feed.sql.
+Le fil News moto & politique propose des filtres Europe, France, Région Sud et Alpes-Maritimes.
+ca_news_watch conserve la date et le résultat de la dernière recherche, même sans nouveauté.
+Le navigateur recharge le fil chaque minute lorsqu’il est visible ; cela ne lance pas une
+nouvelle recherche et ne constitue pas du temps réel instantané. Au-delà de trois heures
+sans recherche utile, l’interface signale une actualisation à vérifier. Elle dépend du
 maintien des accès de la tâche à Supabase et à la recherche web. Sa pause se gère dans les
 tâches ChatGPT ; Suspendre dans Courrier privé concerne uniquement l’import et Gemini.
 Les recherches ne doivent pas présenter une proposition associative comme une loi adoptée.

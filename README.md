@@ -8,7 +8,8 @@ Application React prévue pour GitHub Pages, avec connexion et données partagé
 - Réunions : ordre du jour modifiable, points importants et décisions.
 - Calendrier mensuel et échéances.
 - Courrier : import Gmail, analyse Gemini, classement et propositions à relire.
-- Actualités privées : bilan, suivi des sujets, newsletters par mois et veille web sourcée.
+- Actualités privées : bilan, suivi des sujets, newsletters par mois.
+- News moto & politique : fil sourcé Europe/France/Région Sud/06, nature des annonces, impact local et date des recherches. Veille horaire, écran rafraîchi chaque minute.
 - Connexion par lien reçu par mail et liste des membres autorisés côté base.
 - Protection contre l’écrasement d’une modification faite par un autre membre.
 - Déploiement GitHub Pages via Actions.
