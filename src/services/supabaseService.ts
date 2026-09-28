@@ -2,8 +2,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const DEFAULT_SUPABASE_URL = 'https://hojiveehwtazeqiymnwg.supabase.co';
-// Clé publique anon par défaut (peut être configurée ici, par VITE_SUPABASE_PUBLISHABLE_KEY ou via l'UI)
-export const DEFAULT_SUPABASE_ANON_KEY = '';
+// Clé publique publishable / anon Supabase de l'instance FFMC 06
+export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_YvL0wE3RtQ71kQqU1hOVzA_yQTtOeFI';
 
 export interface SupabaseConfigState {
   url: string;
