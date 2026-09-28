@@ -7,12 +7,13 @@ type Article={id:string;title:string;body:string;topic:string;progress:string;ne
 type Watch={last_checked_at:string|null;last_success_at:string|null;status:string;message:string};
 const scopes=['Tous','Europe','France','Région Sud','Alpes-Maritimes'];
 const types=['Tous','Décision officielle','Projet en débat','Position associative','Événement','Étude et chiffres','Information'];
+const views=['Actualités','Réseau FFMC','Idées à reprendre'] as const;
 const stamp=(s:string)=>new Date(s).toLocaleString('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'});
 const day=(s:string)=>new Date(s.length===10?s+'T12:00:00Z':s).toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',day:'numeric',month:'long',year:'numeric'});
 function safeUrl(s:string){try{const u=new URL(s);return u.protocol==='https:'||u.protocol==='http:'?u.href:undefined;}catch{return undefined;}}
 
 export default function MotoNews({onPrepareShare,onPrepareRecord}:{onPrepareShare:(p:Publication)=>void;onPrepareRecord:(r:RecordItem)=>void}){
- const [items,setItems]=useState<Article[]>([]),[watch,setWatch]=useState<Watch|null>(null),[scope,setScope]=useState('Tous'),[type,setType]=useState('Tous'),[search,setSearch]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(0),[more,setMore]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[now,setNow]=useState(Date.now());
+ const [view,setView]=useState<(typeof views)[number]>('Actualités'),[items,setItems]=useState<Article[]>([]),[watch,setWatch]=useState<Watch|null>(null),[scope,setScope]=useState('Tous'),[type,setType]=useState('Tous'),[search,setSearch]=useState(''),[query,setQuery]=useState(''),[page,setPage]=useState(0),[more,setMore]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[now,setNow]=useState(Date.now());
  const version=useRef(0);
  useEffect(()=>{const timer=setTimeout(()=>{setQuery(search);setPage(0)},300);return()=>clearTimeout(timer)},[search]);
  async function load(quiet=false){const current=++version.current;if(!quiet)setBusy(true);try{
@@ -26,7 +27,10 @@ export default function MotoNews({onPrepareShare,onPrepareRecord}:{onPrepareShar
  const stale=!watch?.last_success_at||now-new Date(watch.last_success_at).getTime()>3*3600000;
  const firstPage=page===0&&scope==='Tous'&&type==='Tous'&&!query;
  const lead=firstPage?(items.find(n=>n.importance==='À la une')||items[0]):undefined;
- const rest=lead?items.filter(n=>n.id!==lead.id):items;
+ const networkRx=/ffmc|antenne|motards en colère|manifestation|relais motards|calmos|jti|assises/i;
+ const visible=view==='Actualités'?items:view==='Réseau FFMC'?items.filter(n=>networkRx.test(n.title+' '+n.body+' '+n.topic+' '+n.source_refs.map(s=>s.label).join(' '))):items.filter(n=>networkRx.test(n.title+' '+n.body+' '+n.topic)&&(/événement|position associative/i.test(n.news_type)||/action|opération|initiative|balade|relais|formation|manifestation/i.test(n.title+' '+n.body)));
+ const shownLead=firstPage?(visible.find(n=>n.importance==='À la une')||visible[0]):undefined;
+ const rest=shownLead?visible.filter(n=>n.id!==shownLead.id):visible;
  function article(n:Article,featured=false){return <article key={n.id} className={'moto-story '+(featured?'moto-featured':'')}>
   <div className="moto-tags"><span className="moto-scope">{n.news_scope}</span><span>{n.news_type}</span>{n.importance!=='À suivre'&&<strong>{n.importance}</strong>}</div>
   <p className="moto-topic">{n.topic}</p><h2>{n.title}</h2>
@@ -39,7 +43,9 @@ export default function MotoNews({onPrepareShare,onPrepareRecord}:{onPrepareShar
  return <section className="moto-news"><div className="moto-masthead"><div><p className="eyebrow"><Newspaper size={15}/> LE FIL MOTO & POLITIQUE</p><h2>Comprendre ce qui change.<br/>Savoir quoi défendre.</h2><p>Europe, France et Région Sud : décisions publiques, débats, routes et vie du mouvement motard.</p></div><Globe2 className="moto-globe" size={100} strokeWidth={1}/></div>
  <div className={'moto-watch '+(stale||watch?.status==='error'?'moto-watch-warning':'')} role="status"><div><strong>Recherche web programmée toutes les heures</strong><p>{watch?.last_checked_at?'Dernière recherche : '+stamp(watch.last_checked_at)+' (Paris).':'Première recherche en attente.'} {stale?'Actualisation à vérifier. ':''}{watch?.status==='partial'?'Couverture partielle. ':''}{watch?.message}</p><small>Synthèses assistées par IA · Actualisation de l’écran chaque minute · Pas de flux instantané</small></div><button className="secondary" onClick={()=>void load()} disabled={busy}><RefreshCw size={15}/>{busy?'Chargement…':'Actualiser le fil'}</button></div>
  <div className="moto-filters"><div className="filters" aria-label="Zone géographique">{scopes.map(s=><button aria-pressed={scope===s} className={scope===s?'chosen':''} key={s} onClick={()=>{setScope(s);setPage(0)}}>{s}</button>)}</div><div className="news-toolbar"><label>Rechercher<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="CT, voies réservées, carburants…"/></label><label>Nature de l’information<select value={type} onChange={e=>{setType(e.target.value);setPage(0)}}>{types.map(t=><option key={t}>{t}</option>)}</select></label></div></div>
- {error&&<p role="alert" className="overdue">{error}</p>}{busy?<p>Chargement du fil…</p>:<>{lead&&article(lead,true)}<div className="moto-grid">{rest.map(n=>article(n))}</div>{!items.length&&<div className="empty"><Newspaper size={28}/><h3>Aucune actualité dans cette sélection</h3><p>Les nouvelles vérifiées apparaîtront ici. Une période sans nouveauté ne crée pas de faux articles.</p></div>}</>}
+ {error&&<p role="alert" className="overdue">{error}</p>}{busy?<p>Chargement du fil…</p>:<><div className="filters" aria-label="Vue actualités">{views.map(v=><button aria-pressed={view===v} className={view===v?'chosen':''} key={v} onClick={()=>setView(v)}>{v}</button>)}</div>
+ {view==='Idées à reprendre'&&<div className="moto-watch"><div><strong>Boîte à idées du réseau</strong><p>Initiatives repérées dans le mouvement FFMC à étudier pour le 06. Une idée affichée ici n’est pas une décision : elle doit être adaptée et validée par le CA.</p></div></div>}
+ {shownLead&&article(shownLead,true)}<div className="moto-grid">{rest.map(n=>article(n))}</div>{!visible.length&&<div className="empty"><Newspaper size={28}/><h3>Aucune actualité dans cette sélection</h3><p>Les nouvelles vérifiées apparaîtront ici. Une période sans nouveauté ne crée pas de faux articles.</p></div>}</>}
  <div className="sharing-actions moto-pagination"><button className="secondary" disabled={!page||busy} onClick={()=>setPage(p=>p-1)}>Précédent</button><span>Page {page+1}</span><button className="secondary" disabled={!more||busy} onClick={()=>setPage(p=>p+1)}>Suivant</button></div>
  <aside className="moto-method"><strong>Des sources, des dates, du contexte.</strong><p>Une proposition ou une position associative n’est pas une règle en vigueur. Les synthèses précisent les points restant à vérifier. Le partage au CA reste soumis à ta validation.</p><a href="https://www.inforoutes06.fr/" target="_blank" rel="noreferrer">Conditions de circulation immédiates : consulter Inforoutes 06 <ArrowUpRight size={14}/></a></aside></section>;
 }
