@@ -100,7 +100,15 @@ export function saveCAShares(shares: CAShare[]): void {
 }
 
 export function getStoredCAMembers(): CAMember[] {
-  return loadFromStorage<CAMember[]>(STORAGE_KEYS.CA_MEMBERS, INITIAL_CA_MEMBERS);
+  const list = loadFromStorage<CAMember[]>(STORAGE_KEYS.CA_MEMBERS, INITIAL_CA_MEMBERS);
+  // Auto-sync Antoine Fabre if needed
+  const hasAntoineNew = list.some((m) => m.email.toLowerCase() === 'antoinefabre1909@gmail.com');
+  if (!hasAntoineNew) {
+    const updated = [INITIAL_CA_MEMBERS[0], ...list.filter((m) => m.id !== 'usr-antoine')];
+    saveToStorage(STORAGE_KEYS.CA_MEMBERS, updated);
+    return updated;
+  }
+  return list;
 }
 
 export function saveCAMembers(members: CAMember[]): void {

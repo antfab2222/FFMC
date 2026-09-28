@@ -131,23 +131,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
     try {
       // Step A: Antoine Fabre Coordinator Master Check
       const isAntoine =
+        cleanEmail === 'antoinefabre1909@gmail.com' ||
         cleanEmail === 'compteepicgamesantoine@gmail.com' ||
         cleanEmail === 'coordinateur.ffmc06@gmail.com' ||
         cleanEmail.includes('antoine');
 
       const isCoordMasterCode =
-        ['motard06', '06000', 'ffmc06', 'ffmc06-coord!2026', 'coord06'].includes(cleanCode.toLowerCase());
+        ['123456', 'motard06', '06000', 'ffmc06', 'ffmc06-coord!2026', 'coord06'].includes(cleanCode.toLowerCase());
 
       if (isAntoine && isCoordMasterCode) {
         const antoineMember: CAMember = {
           id: 'usr-antoine',
           name: 'Antoine Fabre',
-          email: cleanEmail,
+          email: 'antoinefabre1909@gmail.com',
           role: 'coordinateur',
           title: 'Coordinateur Général FFMC 06',
           avatarColor: 'bg-red-700 text-white',
           phone: '06 12 34 56 78',
-          password: cleanCode,
+          password: '123456',
         };
         setSuccessMessage(`Connexion réussie ! Bienvenue ${antoineMember.name} (Coordinateur).`);
         setTimeout(() => onLoginSuccess(antoineMember), 500);
@@ -308,7 +309,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
                 <input
                   type="email"
                   required
-                  placeholder="coordinateur.ffmc06@gmail.com ou votre email..."
+                  placeholder="antoinefabre1909@gmail.com..."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/80 text-white text-xs placeholder:text-slate-600 focus:ring-2 focus:ring-red-600 focus:border-red-600 focus:outline-none"
@@ -341,7 +342,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
                 <input
                   type={showCode ? 'text' : 'password'}
                   required
-                  placeholder={codeSent ? 'Entrez le code à 6 chiffres reçu' : 'Code ou mot de passe attribué'}
+                  placeholder={codeSent ? 'Entrez le code à 6 chiffres reçu' : 'Code ou mot de passe (ex: 123456)'}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 bg-slate-950/80 text-white text-xs placeholder:text-slate-600 focus:ring-2 focus:ring-red-600 focus:border-red-600 focus:outline-none font-mono"
@@ -360,7 +361,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
             <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-[11px] text-slate-300 flex items-start gap-2">
               <span className="text-sm">💡</span>
               <div className="leading-snug">
-                <strong>Accès direct :</strong> Vous pouvez aussi vous connecter avec le mot de passe attribué (ex : <span className="text-amber-300 font-mono font-bold">motard06</span> pour le coordinateur) sans attendre le mail.
+                <strong>Accès direct Coordinateur :</strong> Email <span className="text-white font-mono font-semibold">antoinefabre1909@gmail.com</span> et mot de passe <span className="text-amber-300 font-mono font-bold">123456</span>.
               </div>
             </div>
 
