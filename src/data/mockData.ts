@@ -590,12 +590,22 @@ export const INITIAL_CA_MEMBERS = [
   {
     id: 'usr-antoine',
     name: 'Antoine Fabre',
+    email: 'compteepicgamesantoine@gmail.com',
+    role: 'coordinateur' as const,
+    title: 'Coordinateur Général FFMC 06',
+    avatarColor: 'bg-red-700 text-white',
+    phone: '06 12 34 56 78',
+    password: 'motard06',
+  },
+  {
+    id: 'usr-coordinateur',
+    name: 'Antoine Fabre',
     email: 'coordinateur.ffmc06@gmail.com',
     role: 'coordinateur' as const,
     title: 'Coordinateur Général FFMC 06',
     avatarColor: 'bg-red-700 text-white',
     phone: '06 12 34 56 78',
-    password: 'FFMC06-Coord!2026',
+    password: 'motard06',
   },
   {
     id: 'usr-jeanmarc',

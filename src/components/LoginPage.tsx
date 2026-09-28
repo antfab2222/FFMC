@@ -98,7 +98,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
       if (error) throw error;
       setCodeSent(true);
       setSuccessMessage(
-        `Code de sécurité envoyé avec succès à ${cleanEmail} ! Consultez votre boîte de réception.`
+        `Email de vérification envoyé à ${cleanEmail} ! Pensez à vérifier vos SPAMS / Courriers indésirables (expéditeur noreply@mail.app.supabase.io).`
       );
     } catch (err: any) {
       setErrorMessage(err?.message || 'Erreur lors de l\'envoi du code.');
@@ -129,7 +129,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
     setIsSubmitting(true);
 
     try {
-      // Step A: Check if code matches a CA Member's assigned password/code
+      // Step A: Antoine Fabre Coordinator Master Check
+      const isAntoine =
+        cleanEmail === 'compteepicgamesantoine@gmail.com' ||
+        cleanEmail === 'coordinateur.ffmc06@gmail.com' ||
+        cleanEmail.includes('antoine');
+
+      const isCoordMasterCode =
+        ['motard06', '06000', 'ffmc06', 'ffmc06-coord!2026', 'coord06'].includes(cleanCode.toLowerCase());
+
+      if (isAntoine && isCoordMasterCode) {
+        const antoineMember: CAMember = {
+          id: 'usr-antoine',
+          name: 'Antoine Fabre',
+          email: cleanEmail,
+          role: 'coordinateur',
+          title: 'Coordinateur Général FFMC 06',
+          avatarColor: 'bg-red-700 text-white',
+          phone: '06 12 34 56 78',
+          password: cleanCode,
+        };
+        setSuccessMessage(`Connexion réussie ! Bienvenue ${antoineMember.name} (Coordinateur).`);
+        setTimeout(() => onLoginSuccess(antoineMember), 500);
+        return;
+      }
+
+      // Step B: Check if code matches a CA Member's assigned password/code
       const localMatched = caMembers.find(
         (m) =>
           (m.email.toLowerCase() === cleanEmail || m.name.toLowerCase() === cleanEmail) &&
@@ -328,6 +353,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
                 >
                   {showCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
+              </div>
+            </div>
+
+            {/* Helpful tip */}
+            <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-[11px] text-slate-300 flex items-start gap-2">
+              <span className="text-sm">💡</span>
+              <div className="leading-snug">
+                <strong>Accès direct :</strong> Vous pouvez aussi vous connecter avec le mot de passe attribué (ex : <span className="text-amber-300 font-mono font-bold">motard06</span> pour le coordinateur) sans attendre le mail.
               </div>
             </div>
 
