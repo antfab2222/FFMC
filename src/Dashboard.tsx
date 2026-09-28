@@ -1,5 +1,5 @@
 'use client';
-import {useState,useEffect} from 'react';
+import {useState,useEffect,type FormEvent} from 'react';
 import {LayoutDashboard,FolderOpen,CalendarDays,Mail,Users,Plus,ArrowUpRight,ShieldCheck,ChevronLeft,ChevronRight,Check,ClipboardList,Newspaper} from 'lucide-react';
 import {SidebarProvider,Sidebar,SidebarHeader,SidebarContent,SidebarFooter,SidebarMenu,SidebarMenuItem,SidebarMenuButton,SidebarTrigger} from '@/components/ui/sidebar';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription} from '@/components/ui/dialog';
@@ -21,7 +21,7 @@ async function refresh(){setLoading(true);try{setRows(await listRecords());setEr
 useEffect(()=>{refresh();},[]);
 const dossiers=rows.filter(r=>r.kind==='Dossier'),active=dossiers.filter(r=>r.status!=='Terminé'&&r.status!=='Archivé'),due=rows.filter(r=>r.due&&r.status!=='Terminé'&&r.status!=='Archivé').sort((a,b)=>a.due.localeCompare(b.due)),decisions=dossiers.filter(r=>r.status==='À décider');
 function edit(kind='Dossier'){setForm(empty(kind));}
-async function save(e:React.FormEvent){e.preventDefault();setSaving(true);try{await saveRecord(form!);setForm(null);toast.success('Enregistré');await refresh();}catch(e){toast.error((e as Error).message);}finally{setSaving(false);}}
+async function save(e:FormEvent){e.preventDefault();setSaving(true);try{await saveRecord(form!);setForm(null);toast.success('Enregistré');await refresh();}catch(e){toast.error((e as Error).message);}finally{setSaving(false);}}
 function exportSummary(){const mails=rows.filter(r=>r.kind==='Mail'&&r.status==='À partager');const content='FFMC 06 — Synthèse à relire avant diffusion\n\n'+mails.map(r=>r.title+'\n'+r.notes+'\nSuite : '+r.next).join('\n\n');const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='FFMC06-synthese-CA.txt';a.click();URL.revokeObjectURL(url);}
 const card=(r:RecordItem)=><button key={r.id} className="record" onClick={()=>setForm({...r})}><div className="record-top"><span className={'badge status-'+r.status.replaceAll(' ','-')}>{r.status}</span><ArrowUpRight size={17}/></div><h3>{r.title}</h3><p>{r.next||'Prochaine étape à préciser'}</p><div className="record-bottom"><span>{r.owner||'Référent à désigner'}</span><span className={r.due&&r.due<today()&&r.status!=='Terminé'?'overdue':''}>{format(r.due)}</span></div></button>;
 const list=(items:RecordItem[],kind:string)=>items.length?<div className="cards">{items.map(card)}</div>:<div className="empty"><FolderOpen size={30}/><h3>Aucun {kind==='Mail'?'mail':kind==='Réunion'?'compte rendu':'dossier'} pour le moment</h3><p>{kind==='Dossier'?'Commencez par le CT moto ou une prochaine action.':'Ajoutez les informations utiles pour le CA.'}</p><button className="secondary" onClick={()=>edit(kind)}>Ajouter {kind==='Réunion'?'une réunion':kind==='Mail'?'un mail':'un dossier'}</button></div>;
