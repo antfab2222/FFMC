@@ -52,15 +52,10 @@ export function saveTasks(tasks: Task[]): void {
 }
 
 export function getStoredEmails(): EmailMessage[] {
-  const stored = loadFromStorage<EmailMessage[]>(STORAGE_KEYS.EMAILS, INITIAL_EMAILS);
-  const existingIds = new Set(stored.map((e) => e.id));
-  const missingInitial = INITIAL_EMAILS.filter((e) => !existingIds.has(e.id));
-  if (missingInitial.length > 0) {
-    const merged = [...missingInitial, ...stored];
-    saveToStorage(STORAGE_KEYS.EMAILS, merged);
-    return merged;
+  if (typeof window !== 'undefined' && localStorage.getItem('ffmc06_emails_cleared') === 'true') {
+    return loadFromStorage<EmailMessage[]>(STORAGE_KEYS.EMAILS, []);
   }
-  return stored;
+  return loadFromStorage<EmailMessage[]>(STORAGE_KEYS.EMAILS, INITIAL_EMAILS);
 }
 
 export function saveEmails(emails: EmailMessage[]): void {

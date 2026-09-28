@@ -1,4 +1,5 @@
 import { MailCategory } from './mail-taxonomy';
+export type { MailCategory };
 
 export type TaskStatus = 'todo' | 'in_progress' | 'waiting' | 'completed' | 'cancelled';
 export type TaskPriority = 'p0' | 'p1' | 'p2' | 'p3';

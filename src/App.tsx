@@ -503,6 +503,17 @@ export default function App() {
             onAddTask={handleAddTask}
             onPrepareCAShare={handlePrepareCAShareFromEmail}
             selectedEmailId={activeEmailDetail?.id}
+            onResetEmails={() => {
+              localStorage.setItem('ffmc06_emails_cleared', 'true');
+              setEmails([]);
+              saveEmails([]);
+            }}
+            onSetEmails={(newEmails) => {
+              localStorage.removeItem('ffmc06_emails_cleared');
+              setEmails(newEmails);
+              saveEmails(newEmails);
+            }}
+            onShowToast={showToast}
           />
         )}
 
