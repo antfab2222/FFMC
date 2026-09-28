@@ -94,3 +94,6 @@ Les clés et jetons restent côté Supabase, jamais dans GitHub Pages.
 - https://supabase.com/docs/guides/auth/auth-email-passwordless
 - https://supabase.com/docs/guides/database/postgres/row-level-security
 - https://supabase.com/docs/guides/getting-started/api-keys
+
+
+<!-- deployment refresh -->
