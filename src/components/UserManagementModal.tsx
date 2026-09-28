@@ -522,47 +522,47 @@ Connectez-vous avec votre adresse email et ce code d'accès.`;
                             </div>
                           )}
 
-                          {/* Password Box */}
-                          <div className="mt-2 p-2 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Key className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                              <span className="text-[11px] font-medium text-slate-600 dark:text-zinc-400 shrink-0">
-                                Pass :
-                              </span>
-                              <span className="font-mono text-xs text-slate-900 dark:text-white truncate">
-                                {hasPassword
-                                  ? showPass
-                                    ? member.password
-                                    : '••••••••••••'
-                                  : '(non configuré)'}
-                              </span>
-                            </div>
+                          {/* Password Box (Coordinator only) */}
+                          {isCoordinator && (
+                            <div className="mt-2 p-2 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Key className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-zinc-400 shrink-0">
+                                  Pass :
+                                </span>
+                                <span className="font-mono text-xs text-slate-900 dark:text-white truncate">
+                                  {hasPassword
+                                    ? showPass
+                                      ? member.password
+                                      : '••••••••••••'
+                                    : '(non configuré)'}
+                                </span>
+                              </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
-                              {hasPassword && (
-                                <>
-                                  <button
-                                    onClick={() => togglePasswordVisibility(member.id)}
-                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-700"
-                                    title={showPass ? 'Masquer' : 'Afficher'}
-                                  >
-                                    {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                  </button>
-                                  <button
-                                    onClick={() => copyToClipboard(member.password || '', member.id)}
-                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-700"
-                                    title="Copier le mot de passe"
-                                  >
-                                    {copiedId === member.id ? (
-                                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                    ) : (
-                                      <Copy className="w-3.5 h-3.5" />
-                                    )}
-                                  </button>
-                                </>
-                              )}
+                              <div className="flex items-center gap-1 shrink-0">
+                                {hasPassword && (
+                                  <>
+                                    <button
+                                      onClick={() => togglePasswordVisibility(member.id)}
+                                      className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-700"
+                                      title={showPass ? 'Masquer' : 'Afficher'}
+                                    >
+                                      {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                    </button>
+                                    <button
+                                      onClick={() => copyToClipboard(member.password || '', member.id)}
+                                      className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 hover:text-slate-700"
+                                      title="Copier le mot de passe"
+                                    >
+                                      {copiedId === member.id ? (
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                      ) : (
+                                        <Copy className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                  </>
+                                )}
 
-                              {isCoordinator && (
                                 <button
                                   onClick={() => handleQuickGeneratePasswordForMember(member)}
                                   className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 text-[10px] font-semibold flex items-center gap-1"
@@ -571,46 +571,56 @@ Connectez-vous avec votre adresse email et ce code d'accès.`;
                                   <RefreshCw className="w-3 h-3" />
                                   <span>Régénérer</span>
                                 </button>
-                              )}
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Action buttons footer */}
                       <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between gap-2">
-                        {/* Switch user button */}
-                        <button
-                          onClick={() => onSelectUser(member)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-                            isCurrent
-                              ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 cursor-default'
-                              : 'bg-red-700 hover:bg-red-800 text-white shadow-xs'
-                          }`}
-                        >
-                          <UserCheck className="w-3.5 h-3.5" />
-                          <span>{isCurrent ? 'Actif' : 'Basculer'}</span>
-                        </button>
+                        {/* Auth state: Active session or prompt password login */}
+                        {isCurrent ? (
+                          <span className="px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800/50">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Votre compte actuel</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setActiveTab('login');
+                              setLoginEmail(member.email);
+                              setLoginPassword('');
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-700 transition flex items-center gap-1.5 shadow-2xs"
+                            title="Se connecter avec le mot de passe de ce compte"
+                          >
+                            <Lock className="w-3 h-3 text-slate-400" />
+                            <span>Connexion avec mot de passe</span>
+                          </button>
+                        )}
 
                         <div className="flex items-center gap-1.5">
-                          {/* Copy Access Card button */}
-                          <button
-                            onClick={() => copyMemberAccessCard(member)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs flex items-center gap-1"
-                            title="Copier la fiche complète (Email + Pass) pour lui envoyer par WhatsApp / SMS"
-                          >
-                            {copiedCardId === member.id ? (
-                              <>
-                                <Check className="w-3 h-3 text-emerald-600" />
-                                <span className="text-[11px] text-emerald-600 font-semibold">Fiche copiée !</span>
-                              </>
-                            ) : (
-                              <>
-                                <Share2 className="w-3 h-3" />
-                                <span className="text-[11px]">Transmettre</span>
-                              </>
-                            )}
-                          </button>
+                          {/* Copy Access Card button (Coordinator only) */}
+                          {isCoordinator && (
+                            <button
+                              onClick={() => copyMemberAccessCard(member)}
+                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs flex items-center gap-1"
+                              title="Copier la fiche complète (Email + Pass) pour lui envoyer par WhatsApp / SMS"
+                            >
+                              {copiedCardId === member.id ? (
+                                <>
+                                  <Check className="w-3 h-3 text-emerald-600" />
+                                  <span className="text-[11px] text-emerald-600 font-semibold">Fiche copiée !</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Share2 className="w-3 h-3" />
+                                  <span className="text-[11px]">Transmettre</span>
+                                </>
+                              )}
+                            </button>
+                          )}
 
                           {/* Coordinator edit / delete */}
                           {isCoordinator && (

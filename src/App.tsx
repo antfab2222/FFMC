@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Lock } from 'lucide-react';
 import {
   getStoredTasks,
   saveTasks,
@@ -205,20 +206,12 @@ export default function App() {
     showToast('Déconnexion effectuée. À bientôt sur l’intranet FFMC 06 !');
   };
 
-  // Toggle user role
-  const handleToggleUserRole = () => {
-    const nextRole = userRole === 'coordinateur' ? 'membre' : 'coordinateur';
-    setUserRole(nextRole);
-    setCurrentUser((prev) => ({ ...prev, role: nextRole }));
-    showToast(
-      nextRole === 'membre'
-        ? 'Vue Membre du CA activée (Accès restreint aux publications & synthèses)'
-        : 'Vue Coordinateur activée (Accès complet au Centre de commande)'
-    );
-    if (nextRole === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron', 'team'].includes(activeTab)) {
+  // Guard member access: redirect away from coordinator-only tabs
+  useEffect(() => {
+    if (userRole === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron', 'team'].includes(activeTab)) {
       setActiveTab('today');
     }
-  };
+  }, [userRole, activeTab]);
 
   // Handlers for Tasks
   const handleUpdateTaskStatus = (taskId: string, newStatus: TaskStatus) => {
@@ -426,7 +419,6 @@ export default function App() {
         unreadNewsCount={unreadNewsCount}
         activeSharesCount={caShares.length}
         userRole={userRole}
-        onToggleUserRole={handleToggleUserRole}
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenConnections={() => setIsConnectionsOpen(true)}
@@ -437,6 +429,40 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Access Restricted Screen for CA Members trying to access Coordinator tools */}
+        {userRole === 'membre' && ['dashboard', 'inbox', 'meetings', 'team', 'cron'].includes(activeTab) && (
+          <div className="max-w-xl mx-auto my-12 p-8 bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-xl text-center space-y-4 animate-in fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center shadow-inner">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Espace réservé au Coordinateur Général
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                Accès restreint · Niveau d'habilitation : Coordinateur
+              </p>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed max-w-md mx-auto">
+              Cette section contient des données de gestion interne et de correspondance réservées à l'administration du bureau. En tant que <strong>Membre du Conseil d'Administration</strong>, vous avez accès à l'espace <strong>Partages du CA</strong>, à la <strong>Synthèse quotidienne</strong> et à la <strong>Veille d'actualités</strong>.
+            </p>
+            <div className="pt-3 flex flex-wrap items-center justify-center gap-2.5">
+              <button
+                onClick={() => setActiveTab('shares')}
+                className="px-4 py-2.5 rounded-xl bg-red-700 hover:bg-red-800 text-white font-semibold text-xs shadow-md transition"
+              >
+                Accéder aux Partages du CA
+              </button>
+              <button
+                onClick={() => setActiveTab('today')}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold text-xs transition"
+              >
+                Voir le Briefing du jour
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'today' && (
           <TodayMorningBrief
             tasks={tasks}
@@ -452,7 +478,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && userRole === 'coordinateur' && (
           <Dashboard
             tasks={tasks}
             emails={emails}
@@ -470,7 +496,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'inbox' && (
+        {activeTab === 'inbox' && userRole === 'coordinateur' && (
           <GmailInbox
             emails={emails}
             onUpdateEmail={handleUpdateEmail}
@@ -480,7 +506,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'meetings' && (
+        {activeTab === 'meetings' && userRole === 'coordinateur' && (
           <MeetingsManager
             meetings={meetings}
             tasks={tasks}
@@ -501,7 +527,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'team' && (
+        {activeTab === 'team' && userRole === 'coordinateur' && (
           <CAMembersManager
             caMembers={caMembers}
             currentUser={currentUser}
@@ -522,7 +548,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'cron' && (
+        {activeTab === 'cron' && userRole === 'coordinateur' && (
           <AutomationCron
             cronConfig={cronConfig}
             cronLogs={cronLogs}

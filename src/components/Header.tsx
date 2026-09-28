@@ -35,7 +35,6 @@ interface HeaderProps {
   unreadNewsCount: number;
   activeSharesCount: number;
   userRole: UserRole;
-  onToggleUserRole: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenConnections?: () => void;
@@ -55,7 +54,6 @@ export const Header: React.FC<HeaderProps> = ({
   unreadNewsCount,
   activeSharesCount,
   userRole,
-  onToggleUserRole,
   isDarkMode,
   onToggleDarkMode,
   onOpenConnections,
@@ -188,36 +186,13 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={onLogout}
                   className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 text-slate-500 dark:text-zinc-400 transition shadow-xs"
-                  title="Se déconnecter (Retour à la page de connexion Supabase)"
+                  title="Se déconnecter (Retour à la page de connexion)"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               )}
             </div>
           )}
-
-          {/* Role Preview Button (explained in README: "Le bouton 'Voir la vue membre du CA' permet au coordinateur de prévisualiser la lecture seule.") */}
-          <button
-            onClick={onToggleUserRole}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition shadow-sm ${
-              isCoordinateur
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 dark:border-zinc-700'
-                : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800'
-            }`}
-            title="Basculer entre la vue complète coordinateur et la prévisualisation membre du CA"
-          >
-            {isCoordinateur ? (
-              <>
-                <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
-                <span>Voir la vue membre du CA</span>
-              </>
-            ) : (
-              <>
-                <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-                <span>Retour mode Coordinateur</span>
-              </>
-            )}
-          </button>
 
           {/* Connexions & Données Directes Modal Button */}
           {onOpenConnections && (
@@ -268,15 +243,12 @@ export const Header: React.FC<HeaderProps> = ({
             return (
               <button
                 key={item.id}
+                disabled={isRestricted}
                 onClick={() => {
-                  if (isRestricted) {
-                    alert(
-                      "Section privée réservée au Coordinateur. En mode 'Membre du CA', seuls les partages validés, la synthèse et la veille sont accessibles."
-                    );
-                    return;
-                  }
+                  if (isRestricted) return;
                   setActiveTab(item.id);
                 }}
+                title={isRestricted ? "Section réservée au Coordinateur Général" : item.label}
                 className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
                   isRestricted
                     ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-zinc-600'
