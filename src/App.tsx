@@ -14,6 +14,10 @@ import {
   saveCronLogs,
   getStoredCAShares,
   saveCAShares,
+  getStoredCAMembers,
+  saveCAMembers,
+  getStoredCurrentUser,
+  saveCurrentUser,
   triggerCronSync,
 } from './services/api';
 import {
@@ -26,6 +30,7 @@ import {
   TaskStatus,
   UserRole,
   CAShare,
+  CAMember,
 } from './types';
 import { Header } from './components/Header';
 import { TodayMorningBrief } from './components/TodayMorningBrief';
@@ -37,6 +42,7 @@ import { CASharesManager } from './components/CASharesManager';
 import { AutomationCron } from './components/AutomationCronModal';
 import { SourceTraceabilityModal } from './components/SourceTraceabilityModal';
 import { ConnectionsModal } from './components/ConnectionsModal';
+import { UserManagementModal } from './components/UserManagementModal';
 import { fetchLiveNewsRSS } from './services/api';
 
 export default function App() {
@@ -53,11 +59,14 @@ export default function App() {
   const [caShares, setCaShares] = useState<CAShare[]>(getStoredCAShares);
   const [cronConfig, setCronConfig] = useState<CronConfig>(getStoredCronConfig);
   const [cronLogs, setCronLogs] = useState<CronLog[]>(getStoredCronLogs);
+  const [caMembers, setCaMembers] = useState<CAMember[]>(getStoredCAMembers);
+  const [currentUser, setCurrentUser] = useState<CAMember>(getStoredCurrentUser);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeModalTask, setActiveModalTask] = useState<Task | null>(null);
   const [activeEmailDetail, setActiveEmailDetail] = useState<EmailMessage | null>(null);
   const [isConnectionsOpen, setIsConnectionsOpen] = useState<boolean>(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
 
   // Background fetch of real live news from FFMC & Motomag
   useEffect(() => {
@@ -108,26 +117,50 @@ export default function App() {
     saveCronLogs(cronLogs);
   }, [cronLogs]);
 
+  useEffect(() => {
+    saveCAMembers(caMembers);
+  }, [caMembers]);
+
+  useEffect(() => {
+    saveCurrentUser(currentUser);
+    setUserRole(currentUser.role);
+  }, [currentUser]);
+
   // Toast notification helper
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Switch or select active user
+  const handleSelectUser = (user: CAMember) => {
+    setCurrentUser(user);
+    setUserRole(user.role);
+    showToast(`Connecté en tant que ${user.name} (${user.title})`);
+  };
+
+  const handleAddMember = (newMember: Omit<CAMember, 'id'>) => {
+    const memberWithId: CAMember = {
+      ...newMember,
+      id: `usr-${Date.now()}`,
+    };
+    setCaMembers((prev) => [...prev, memberWithId]);
+    showToast(`Membre ${newMember.name} ajouté au CA !`);
+  };
+
   // Toggle user role
   const handleToggleUserRole = () => {
-    setUserRole((prev) => {
-      const next = prev === 'coordinateur' ? 'membre' : 'coordinateur';
-      showToast(
-        next === 'membre'
-          ? 'Vue Membre du CA activée (Accès restreint aux publications & synthèses)'
-          : 'Vue Coordinateur activée (Accès complet au Centre de commande)'
-      );
-      if (next === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron'].includes(activeTab)) {
-        setActiveTab('today');
-      }
-      return next;
-    });
+    const nextRole = userRole === 'coordinateur' ? 'membre' : 'coordinateur';
+    setUserRole(nextRole);
+    setCurrentUser((prev) => ({ ...prev, role: nextRole }));
+    showToast(
+      nextRole === 'membre'
+        ? 'Vue Membre du CA activée (Accès restreint aux publications & synthèses)'
+        : 'Vue Coordinateur activée (Accès complet au Centre de commande)'
+    );
+    if (nextRole === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron'].includes(activeTab)) {
+      setActiveTab('today');
+    }
   };
 
   // Handlers for Tasks
@@ -316,6 +349,8 @@ export default function App() {
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         onOpenConnections={() => setIsConnectionsOpen(true)}
+        currentUser={currentUser}
+        onOpenUserModal={() => setIsUserModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -426,6 +461,16 @@ export default function App() {
         isOpen={isConnectionsOpen}
         onClose={() => setIsConnectionsOpen(false)}
         onRefreshData={handleTriggerSync}
+      />
+
+      {/* User Switcher, Login & CA Members Modal */}
+      <UserManagementModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        currentUser={currentUser}
+        caMembers={caMembers}
+        onSelectUser={handleSelectUser}
+        onAddMember={handleAddMember}
       />
 
       {/* Footer */}

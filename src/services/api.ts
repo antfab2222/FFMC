@@ -1,4 +1,4 @@
-import { Task, EmailMessage, Meeting, NewsItem, CronConfig, CronLog, CAShare } from '../types';
+import { Task, EmailMessage, Meeting, NewsItem, CronConfig, CronLog, CAShare, CAMember } from '../types';
 import { fetchLiveRssNews } from './rssService';
 import {
   INITIAL_TASKS,
@@ -8,6 +8,7 @@ import {
   INITIAL_CRON_CONFIG,
   INITIAL_CRON_LOGS,
   INITIAL_CA_SHARES,
+  INITIAL_CA_MEMBERS,
 } from '../data/mockData';
 
 const STORAGE_KEYS = {
@@ -18,6 +19,8 @@ const STORAGE_KEYS = {
   CRON_CONFIG: 'ffmc06_cron_config_v1',
   CRON_LOGS: 'ffmc06_cron_logs_v1',
   CA_SHARES: 'ffmc06_ca_shares_v1',
+  CA_MEMBERS: 'ffmc06_ca_members_v1',
+  CURRENT_USER: 'ffmc06_current_user_v1',
 };
 
 // Local storage helpers
@@ -94,6 +97,22 @@ export function getStoredCAShares(): CAShare[] {
 
 export function saveCAShares(shares: CAShare[]): void {
   saveToStorage(STORAGE_KEYS.CA_SHARES, shares);
+}
+
+export function getStoredCAMembers(): CAMember[] {
+  return loadFromStorage<CAMember[]>(STORAGE_KEYS.CA_MEMBERS, INITIAL_CA_MEMBERS);
+}
+
+export function saveCAMembers(members: CAMember[]): void {
+  saveToStorage(STORAGE_KEYS.CA_MEMBERS, members);
+}
+
+export function getStoredCurrentUser(): CAMember {
+  return loadFromStorage<CAMember>(STORAGE_KEYS.CURRENT_USER, INITIAL_CA_MEMBERS[0]);
+}
+
+export function saveCurrentUser(user: CAMember): void {
+  saveToStorage(STORAGE_KEYS.CURRENT_USER, user);
 }
 
 // Backend API callers

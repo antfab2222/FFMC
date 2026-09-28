@@ -19,7 +19,8 @@ import {
   Database,
   Radio,
 } from 'lucide-react';
-import { CronConfig, UserRole } from '../types';
+import { CronConfig, UserRole, CAMember } from '../types';
+import { ChevronDown, User } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -36,6 +37,8 @@ interface HeaderProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   onOpenConnections?: () => void;
+  currentUser?: CAMember;
+  onOpenUserModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -53,6 +56,8 @@ export const Header: React.FC<HeaderProps> = ({
   isDarkMode,
   onToggleDarkMode,
   onOpenConnections,
+  currentUser,
+  onOpenUserModal,
 }) => {
   const isCoordinateur = userRole === 'coordinateur';
 
@@ -142,6 +147,32 @@ export const Header: React.FC<HeaderProps> = ({
             <Radio className="w-3 h-3 text-red-600" />
             <span>Veille : {cronConfig.intervalMinutes}m</span>
           </div>
+
+          {/* User Profile & Connection Button */}
+          {currentUser && onOpenUserModal && (
+            <button
+              onClick={onOpenUserModal}
+              className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-slate-800 dark:text-zinc-200 transition shadow-xs"
+              title="Gérer les utilisateurs, changer de compte ou se connecter par email"
+            >
+              <div
+                className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] shadow-xs ${
+                  currentUser.avatarColor || 'bg-red-700 text-white'
+                }`}
+              >
+                {currentUser.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="font-bold text-xs leading-none flex items-center gap-1">
+                  <span>{currentUser.name}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-zinc-400 leading-tight">
+                  {currentUser.role === 'coordinateur' ? 'Coordinateur' : 'Membre CA'}
+                </div>
+              </div>
+            </button>
+          )}
 
           {/* Role Preview Button (explained in README: "Le bouton 'Voir la vue membre du CA' permet au coordinateur de prévisualiser la lecture seule.") */}
           <button

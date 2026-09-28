@@ -40,6 +40,16 @@ export interface Meeting {
 
 export type UserRole = 'coordinateur' | 'membre';
 
+export interface CAMember {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  title: string;
+  avatarColor?: string;
+  phone?: string;
+}
+
 export interface CAShare {
   id: string;
   title: string;
