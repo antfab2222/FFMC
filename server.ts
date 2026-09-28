@@ -235,6 +235,26 @@ app.post('/api/cron/trigger', (req, res) => {
 });
 
 // RSS Aggregator & Deduplication Endpoint
+app.get('/api/news/rss-proxy', async (req, res) => {
+  const targetUrl = req.query.url as string;
+  if (!targetUrl || !targetUrl.startsWith('http')) {
+    return res.status(400).send('Invalid url parameter');
+  }
+  try {
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'FFMC06-Intranet/1.0 (Mozilla/5.0 compatible)',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+      },
+    });
+    const xml = await response.text();
+    res.setHeader('Content-Type', 'text/xml; charset=utf-8');
+    res.send(xml);
+  } catch (err: any) {
+    res.status(502).send(err?.message || 'Proxy fetch failed');
+  }
+});
+
 app.get('/api/rss/fetch', (req, res) => {
   // Real official feeds simulation with semantic deduplication
   const rawFeeds = [

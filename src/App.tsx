@@ -36,6 +36,8 @@ import { MeetingsManager } from './components/MeetingsManager';
 import { CASharesManager } from './components/CASharesManager';
 import { AutomationCron } from './components/AutomationCronModal';
 import { SourceTraceabilityModal } from './components/SourceTraceabilityModal';
+import { ConnectionsModal } from './components/ConnectionsModal';
+import { fetchLiveNewsRSS } from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('today');
@@ -55,6 +57,16 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeModalTask, setActiveModalTask] = useState<Task | null>(null);
   const [activeEmailDetail, setActiveEmailDetail] = useState<EmailMessage | null>(null);
+  const [isConnectionsOpen, setIsConnectionsOpen] = useState<boolean>(false);
+
+  // Background fetch of real live news from FFMC & Motomag
+  useEffect(() => {
+    fetchLiveNewsRSS().then((res) => {
+      if (res && res.items && res.items.length > 0) {
+        setNewsList(res.items);
+      }
+    });
+  }, []);
 
   // Synchronize Dark Mode with HTML class
   useEffect(() => {
@@ -251,7 +263,16 @@ export default function App() {
       if (res.config) {
         setCronConfig(res.config);
       }
-      showToast('Relève synchronisée avec succès !');
+      // Also fetch fresh news from live feeds
+      const newsRes = await fetchLiveNewsRSS();
+      if (newsRes && newsRes.items && newsRes.items.length > 0) {
+        setNewsList(newsRes.items);
+      }
+      showToast(
+        newsRes?.newCount && newsRes.newCount > 0
+          ? `Relève effectuée : ${newsRes.newCount} nouvelle(s) info(s) ajoutée(s) !`
+          : 'Relève effectuée : données synchronisées avec succès !'
+      );
     } catch (e) {
       showToast('Erreur lors de la synchronisation.');
     } finally {
@@ -294,6 +315,7 @@ export default function App() {
         onToggleUserRole={handleToggleUserRole}
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
+        onOpenConnections={() => setIsConnectionsOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -398,6 +420,13 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Connections & Live Data Modal */}
+      <ConnectionsModal
+        isOpen={isConnectionsOpen}
+        onClose={() => setIsConnectionsOpen(false)}
+        onRefreshData={handleTriggerSync}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-4 text-center text-xs text-slate-500 dark:text-zinc-400">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sun,
   AlertTriangle,
@@ -18,9 +18,12 @@ import {
   Shield,
   Calendar,
   Layers,
+  Wind,
+  Thermometer,
 } from 'lucide-react';
 import { Task, EmailMessage, NewsItem, MorningBriefing, UserRole } from '../types';
 import { INITIAL_MORNING_BRIEF } from '../data/mockData';
+import { fetchLivePassesWeather, MountainPassLive } from '../services/weatherService';
 
 interface TodayMorningBriefProps {
   tasks: Task[];
@@ -46,6 +49,24 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
   const [briefing, setBriefing] = useState<MorningBriefing>(INITIAL_MORNING_BRIEF);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [livePasses, setLivePasses] = useState<MountainPassLive[]>([]);
+  const [isLoadingPasses, setIsLoadingPasses] = useState(false);
+
+  useEffect(() => {
+    loadPassesWeather();
+  }, []);
+
+  const loadPassesWeather = async () => {
+    setIsLoadingPasses(true);
+    try {
+      const data = await fetchLivePassesWeather();
+      setLivePasses(data);
+    } catch (e) {
+      console.warn('Erreur chargement météo:', e);
+    } finally {
+      setIsLoadingPasses(false);
+    }
+  };
 
   const isCoordinateur = userRole === 'coordinateur';
 
@@ -314,21 +335,37 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
           {/* Météo & Cols du 06 */}
           <div className="p-5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-900 dark:text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Mountain className="w-4 h-4 text-red-700 dark:text-red-400" />
-                Météo & Praticabilité des Cols du 06
-              </h3>
-              <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">Info Routes 06</span>
+                <h3 className="text-xs font-bold text-slate-900 dark:text-zinc-200 uppercase tracking-wider">
+                  Météo & Praticabilité des Cols du 06
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Direct Open-Meteo
+                </span>
+                <button
+                  onClick={loadPassesWeather}
+                  disabled={isLoadingPasses}
+                  className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 transition"
+                  title="Rafraîchir les relevés météo"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingPasses ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {briefing.weatherMountainPasses.map((pass) => {
+              {(livePasses.length > 0 ? livePasses : briefing.weatherMountainPasses).map((pass: any) => {
                 const isDelicat = pass.status === 'Délicat';
                 const isTravaux = pass.status === 'Travaux';
+                const hasTemp = typeof pass.temp === 'number';
                 return (
                   <div
                     key={pass.col}
-                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-200/80 dark:border-zinc-800 space-y-1"
+                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-200/80 dark:border-zinc-800 space-y-1.5"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-slate-800 dark:text-zinc-200 text-[11px]">{pass.col}</span>
@@ -344,6 +381,27 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
                         {pass.status}
                       </span>
                     </div>
+
+                    {hasTemp && (
+                      <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-700 dark:text-zinc-300">
+                        <span className="flex items-center gap-1 text-slate-900 dark:text-white">
+                          <Thermometer className="w-3.5 h-3.5 text-red-600" />
+                          {pass.temp}°C
+                        </span>
+                        {pass.windGusts > 0 && (
+                          <span className="flex items-center gap-1 text-slate-500 dark:text-zinc-400 font-normal">
+                            <Wind className="w-3 h-3 text-blue-500" />
+                            {pass.windGusts} km/h
+                          </span>
+                        )}
+                        {pass.weatherDesc && (
+                          <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-normal">
+                            ({pass.weatherDesc})
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     <p className="text-[10px] text-slate-600 dark:text-zinc-400 leading-tight">{pass.details}</p>
                   </div>
                 );

@@ -35,6 +35,7 @@ interface HeaderProps {
   onToggleUserRole: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  onOpenConnections?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -51,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleUserRole,
   isDarkMode,
   onToggleDarkMode,
+  onOpenConnections,
 }) => {
   const isCoordinateur = userRole === 'coordinateur';
 
@@ -163,6 +165,18 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
           </button>
+
+          {/* Connexions & Données Directes Modal Button */}
+          {onOpenConnections && (
+            <button
+              onClick={onOpenConnections}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 dark:border-zinc-700 bg-white hover:bg-slate-50 text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 transition shadow-xs"
+              title="Centre des Connexions (Météo cols, Supabase, Gmail, RSS)"
+            >
+              <Radio className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+              <span className="hidden md:inline">Connexions</span>
+            </button>
+          )}
 
           {/* Sync Trigger button */}
           <button

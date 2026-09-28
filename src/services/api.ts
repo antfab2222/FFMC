@@ -1,4 +1,5 @@
 import { Task, EmailMessage, Meeting, NewsItem, CronConfig, CronLog, CAShare } from '../types';
+import { fetchLiveRssNews } from './rssService';
 import {
   INITIAL_TASKS,
   INITIAL_EMAILS,
@@ -165,14 +166,51 @@ export async function triggerCronSync() {
 
 export async function fetchLiveNewsRSS() {
   try {
-    const res = await fetch('/api/rss/fetch');
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    return await res.json();
+    // 1. Fetch real live news from FFMC Nationale and Motomag feeds
+    const realLiveNews = await fetchLiveRssNews();
+
+    // 2. Fetch local server news if available
+    let serverItems: NewsItem[] = [];
+    try {
+      const res = await fetch('/api/rss/fetch');
+      if (res.ok) {
+        const data = await res.json();
+        serverItems = data.items || [];
+      }
+    } catch {
+      // server route optional
+    }
+
+    const stored = getStoredNews();
+    
+    // Combine and deduplicate by title similarity
+    const existingTitles = new Set(stored.map((s) => s.title.toLowerCase().slice(0, 35)));
+    const newItemsToAdd: NewsItem[] = [];
+
+    for (const item of [...realLiveNews, ...serverItems]) {
+      const key = item.title.toLowerCase().slice(0, 35);
+      if (!existingTitles.has(key)) {
+        existingTitles.add(key);
+        newItemsToAdd.push(item);
+      }
+    }
+
+    const merged = [...newItemsToAdd, ...stored];
+    if (newItemsToAdd.length > 0) {
+      saveNews(merged);
+    }
+
+    return {
+      success: true,
+      items: merged,
+      newCount: newItemsToAdd.length,
+    };
   } catch (err) {
-    console.warn('Backend RSS fetch failed, using stored news:', err);
+    console.warn('Live RSS fetch error, using stored news:', err);
     return {
       success: true,
       items: getStoredNews(),
+      newCount: 0,
     };
   }
 }
