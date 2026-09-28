@@ -2,6 +2,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const DEFAULT_SUPABASE_URL = 'https://hojiveehwtazeqiymnwg.supabase.co';
+// Clé publique anon par défaut (peut être configurée ici, par VITE_SUPABASE_PUBLISHABLE_KEY ou via l'UI)
+export const DEFAULT_SUPABASE_ANON_KEY = '';
 
 export interface SupabaseConfigState {
   url: string;
@@ -18,7 +20,7 @@ export function getSupabaseConfig(): { url: string; key: string } {
   const storedKey = (typeof window !== 'undefined' ? localStorage.getItem('ffmc_supabase_key') : null) || '';
 
   const url = envUrl || DEFAULT_SUPABASE_URL;
-  const key = storedKey || (envKey.includes('REPLACE_ME') ? '' : envKey);
+  const key = storedKey || (envKey.includes('REPLACE_ME') ? '' : envKey) || DEFAULT_SUPABASE_ANON_KEY;
 
   return { url, key };
 }
