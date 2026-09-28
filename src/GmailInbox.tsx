@@ -7,12 +7,21 @@ type Message={mail_category:string;mail_topic:string;filing_source:string;id:str
 type Status={aiNewOnlyAfter?:string|null;autoEnabled:boolean;autoLastRun:string|null;aiPauseUntil:string|null;aiError:string|null;syncError:string|null;aiEnabled:boolean;aiConfigured:boolean;pending:number;remainingToday:number;lastSync:string|null;hasMore:boolean};
 const topics=['Tous les sujets',...mailTopics];
 function repairEncoding(value:string){
- if(!value||!/[ÃÂâ]/.test(value))return value;
- try{
-  const bytes=Uint8Array.from(value,c=>c.charCodeAt(0)&255);
-  const fixed=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
-  return fixed.includes('�')?value:fixed;
- }catch{return value;}
+ if(!value)return value;
+ let current=value;
+ for(let pass=0;pass<3 && /[ÃÂâ]/.test(current);pass++){
+  try{
+   const bytes=Uint8Array.from(current,c=>c.charCodeAt(0)&255);
+   const fixed=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+   if(fixed.includes('�')||fixed===current)break;
+   current=fixed;
+  }catch{break;}
+ }
+ return current
+  .replace(/\u00a0/g,' ')
+  .replace(/[ \t]+/g,' ')
+  .replace(/ ?\n ?/g,'\n')
+  .trim();
 }
 async function invoke(action:string,extra:object={}){const {data,error}=await supabase!.functions.invoke('mail-assistant',{body:{action,...extra}});if(error){let message='Traitement indisponible. Réessayez.';try{const body=await error.context?.json();if(body?.error)message=body.error;}catch{}throw Error(message);}return data;}
 export default function GmailInbox({onPrepareShare,onPrepareRecord}:{onPrepareShare:(p:Publication)=>void;onPrepareRecord:(r:RecordItem)=>void}){
