@@ -1,0 +1,418 @@
+import React, { useState, useEffect } from 'react';
+import {
+  getStoredTasks,
+  saveTasks,
+  getStoredEmails,
+  saveEmails,
+  getStoredNews,
+  saveNews,
+  getStoredMeetings,
+  saveMeetings,
+  getStoredCronConfig,
+  saveCronConfig,
+  getStoredCronLogs,
+  saveCronLogs,
+  getStoredCAShares,
+  saveCAShares,
+  triggerCronSync,
+} from './services/api';
+import {
+  Task,
+  EmailMessage,
+  NewsItem,
+  Meeting,
+  CronConfig,
+  CronLog,
+  TaskStatus,
+  UserRole,
+  CAShare,
+} from './types';
+import { Header } from './components/Header';
+import { TodayMorningBrief } from './components/TodayMorningBrief';
+import { Dashboard } from './Dashboard';
+import { GmailInbox } from './components/GmailInbox';
+import { NewsBoard } from './components/NewsBoard';
+import { MeetingsManager } from './components/MeetingsManager';
+import { CASharesManager } from './components/CASharesManager';
+import { AutomationCron } from './components/AutomationCronModal';
+import { SourceTraceabilityModal } from './components/SourceTraceabilityModal';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<string>('today');
+  const [userRole, setUserRole] = useState<UserRole>('coordinateur');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('ffmc_theme') === 'dark';
+  });
+
+  const [tasks, setTasks] = useState<Task[]>(getStoredTasks);
+  const [emails, setEmails] = useState<EmailMessage[]>(getStoredEmails);
+  const [newsList, setNewsList] = useState<NewsItem[]>(getStoredNews);
+  const [meetings, setMeetings] = useState<Meeting[]>(getStoredMeetings);
+  const [caShares, setCaShares] = useState<CAShare[]>(getStoredCAShares);
+  const [cronConfig, setCronConfig] = useState<CronConfig>(getStoredCronConfig);
+  const [cronLogs, setCronLogs] = useState<CronLog[]>(getStoredCronLogs);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [activeModalTask, setActiveModalTask] = useState<Task | null>(null);
+  const [activeEmailDetail, setActiveEmailDetail] = useState<EmailMessage | null>(null);
+
+  // Synchronize Dark Mode with HTML class
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('ffmc_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('ffmc_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  // Sync state to local storage whenever it changes
+  useEffect(() => {
+    saveTasks(tasks);
+  }, [tasks]);
+
+  useEffect(() => {
+    saveEmails(emails);
+  }, [emails]);
+
+  useEffect(() => {
+    saveNews(newsList);
+  }, [newsList]);
+
+  useEffect(() => {
+    saveMeetings(meetings);
+  }, [meetings]);
+
+  useEffect(() => {
+    saveCAShares(caShares);
+  }, [caShares]);
+
+  useEffect(() => {
+    saveCronConfig(cronConfig);
+  }, [cronConfig]);
+
+  useEffect(() => {
+    saveCronLogs(cronLogs);
+  }, [cronLogs]);
+
+  // Toast notification helper
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Toggle user role
+  const handleToggleUserRole = () => {
+    setUserRole((prev) => {
+      const next = prev === 'coordinateur' ? 'membre' : 'coordinateur';
+      showToast(
+        next === 'membre'
+          ? 'Vue Membre du CA activée (Accès restreint aux publications & synthèses)'
+          : 'Vue Coordinateur activée (Accès complet au Centre de commande)'
+      );
+      if (next === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron'].includes(activeTab)) {
+        setActiveTab('today');
+      }
+      return next;
+    });
+  };
+
+  // Handlers for Tasks
+  const handleUpdateTaskStatus = (taskId: string, newStatus: TaskStatus) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: newStatus, updatedAt: new Date().toISOString() }
+          : t
+      )
+    );
+    showToast(`Statut de l'action #${taskId} mis à jour : ${newStatus}`);
+  };
+
+  const handleUpdateTask = (updated: Task) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === updated.id ? { ...updated, updatedAt: new Date().toISOString() } : t))
+    );
+    showToast('Action mise à jour.');
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    if (window.confirm('Confirmer la suppression de cette action ?')) {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      showToast('Action supprimée.');
+    }
+  };
+
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const created: Task = {
+      ...newTask,
+      id: `tsk-${Date.now().toString().slice(-4)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setTasks((prev) => [created, ...prev]);
+    showToast(`Nouvelle action créée : "${created.title.slice(0, 35)}..."`);
+  };
+
+  // Handlers for Emails
+  const handleUpdateEmail = (updated: EmailMessage) => {
+    setEmails((prev) => {
+      const exists = prev.some((e) => e.id === updated.id);
+      if (exists) {
+        return prev.map((e) => (e.id === updated.id ? updated : e));
+      } else {
+        return [updated, ...prev];
+      }
+    });
+  };
+
+  // Handlers for CA Shares
+  const handleAddCAShare = (newShare: Omit<CAShare, 'id' | 'publishedAt'>) => {
+    const created: CAShare = {
+      ...newShare,
+      id: `sha-${Date.now().toString().slice(-4)}`,
+      publishedAt: new Date().toISOString(),
+      readCount: 0,
+    };
+    setCaShares((prev) => [created, ...prev]);
+    showToast(`Partage "${created.title.slice(0, 35)}..." publié pour le CA.`);
+  };
+
+  const handleUpdateCAShare = (updated: CAShare) => {
+    setCaShares((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    showToast('Publication CA mise à jour.');
+  };
+
+  const handleDeleteCAShare = (shareId: string) => {
+    if (window.confirm('Confirmer la suppression de cette publication destinée au CA ?')) {
+      setCaShares((prev) => prev.filter((s) => s.id !== shareId));
+      showToast('Publication retirée.');
+    }
+  };
+
+  const handlePrepareCAShareFromEmail = (shareData: {
+    title: string;
+    content: string;
+    sourceTitle: string;
+    sourceId: string;
+  }) => {
+    const newShare: CAShare = {
+      id: `sha-${Date.now().toString().slice(-4)}`,
+      title: shareData.title,
+      content: shareData.content,
+      category: 'courrier_valide',
+      publishedAt: new Date().toISOString(),
+      author: userRole === 'coordinateur' ? 'Antoine F. (Coordinateur)' : 'Membre du CA',
+      authorRole: 'Coordinateur FFMC 06',
+      status: 'active',
+      sourceType: 'email',
+      sourceId: shareData.sourceId,
+      sourceTitle: shareData.sourceTitle,
+      readCount: 0,
+    };
+    setCaShares((prev) => [newShare, ...prev]);
+    setActiveTab('shares');
+    showToast("Partage préparé avec succès et ouvert dans l'espace Partages au CA !");
+  };
+
+  // Handler for News
+  const handleAddNews = (newItem: NewsItem) => {
+    setNewsList((prev) => {
+      if (prev.some((n) => n.hash === newItem.hash || n.title === newItem.title)) {
+        return prev;
+      }
+      return [newItem, ...prev];
+    });
+  };
+
+  const handleUpdateNews = (updated: NewsItem) => {
+    setNewsList((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+  };
+
+  // Handler for Meetings
+  const handleAddMeeting = (m: Meeting) => {
+    setMeetings((prev) => [m, ...prev]);
+    showToast(`Réunion "${m.title}" ajoutée au calendrier.`);
+  };
+
+  const handleUpdateMeeting = (m: Meeting) => {
+    setMeetings((prev) => prev.map((item) => (item.id === m.id ? m : item)));
+  };
+
+  // Handler for Cron
+  const handleTriggerSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await triggerCronSync();
+      if (res.log) {
+        setCronLogs((prev) => [res.log, ...prev]);
+      }
+      if (res.config) {
+        setCronConfig(res.config);
+      }
+      showToast('Relève synchronisée avec succès !');
+    } catch (e) {
+      showToast('Erreur lors de la synchronisation.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleUpdateCronConfig = (partial: Partial<CronConfig>) => {
+    setCronConfig((prev) => ({ ...prev, ...partial }));
+    showToast('Configuration du cron mise à jour.');
+  };
+
+  // Urgent counts
+  const urgentTasksCount = tasks.filter((t) => t.priority === 'p0' && t.status !== 'completed').length;
+  const pendingEmailsCount = emails.filter((e) => e.replyStatus === 'pending' || e.replyStatus === 'drafted').length;
+  const unreadNewsCount = newsList.filter((n) => n.impactLevel === 'fort').length;
+
+  return (
+    <div className="min-h-screen bg-slate-100/90 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 flex flex-col font-sans selection:bg-red-600 selection:text-white transition-colors duration-150">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-zinc-900 border border-red-500/50 text-white text-xs font-semibold shadow-2xl animate-in slide-in-from-bottom duration-200 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Top Header & Navigation */}
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        cronConfig={cronConfig}
+        onTriggerSync={handleTriggerSync}
+        isSyncing={isSyncing}
+        urgentTasksCount={urgentTasksCount}
+        pendingEmailsCount={pendingEmailsCount}
+        unreadNewsCount={unreadNewsCount}
+        activeSharesCount={caShares.length}
+        userRole={userRole}
+        onToggleUserRole={handleToggleUserRole}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
+      />
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {activeTab === 'today' && (
+          <TodayMorningBrief
+            tasks={tasks}
+            emails={emails}
+            newsList={newsList}
+            onNavigateTab={setActiveTab}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+            onViewTaskSource={(task) => setActiveModalTask(task)}
+            onOpenEmail={(email) => {
+              setActiveEmailDetail(email);
+              setActiveTab('inbox');
+            }}
+          />
+        )}
+
+        {activeTab === 'dashboard' && (
+          <Dashboard
+            tasks={tasks}
+            emails={emails}
+            newsList={newsList}
+            meetings={meetings}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+            onUpdateTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+            onAddTask={handleAddTask}
+            onNavigateTab={setActiveTab}
+            onOpenEmail={(email) => {
+              setActiveEmailDetail(email);
+              setActiveTab('inbox');
+            }}
+          />
+        )}
+
+        {activeTab === 'inbox' && (
+          <GmailInbox
+            emails={emails}
+            onUpdateEmail={handleUpdateEmail}
+            onAddTask={handleAddTask}
+            onPrepareCAShare={handlePrepareCAShareFromEmail}
+            selectedEmailId={activeEmailDetail?.id}
+          />
+        )}
+
+        {activeTab === 'meetings' && (
+          <MeetingsManager
+            meetings={meetings}
+            tasks={tasks}
+            onAddMeeting={handleAddMeeting}
+            onUpdateMeeting={handleUpdateMeeting}
+            onAddTask={handleAddTask}
+            onViewTaskSource={(task) => setActiveModalTask(task)}
+          />
+        )}
+
+        {activeTab === 'shares' && (
+          <CASharesManager
+            shares={caShares}
+            userRole={userRole}
+            onAddShare={handleAddCAShare}
+            onUpdateShare={handleUpdateCAShare}
+            onDeleteShare={handleDeleteCAShare}
+          />
+        )}
+
+        {activeTab === 'news' && (
+          <NewsBoard
+            newsList={newsList}
+            onAddNews={handleAddNews}
+            onUpdateNews={handleUpdateNews}
+            onAddTask={handleAddTask}
+            onNavigateTab={setActiveTab}
+          />
+        )}
+
+        {activeTab === 'cron' && (
+          <AutomationCron
+            cronConfig={cronConfig}
+            cronLogs={cronLogs}
+            onUpdateConfig={handleUpdateCronConfig}
+            onTriggerSync={handleTriggerSync}
+            isSyncing={isSyncing}
+          />
+        )}
+      </main>
+
+      {/* Global Task Traceability Modal */}
+      {activeModalTask && (
+        <SourceTraceabilityModal
+          task={activeModalTask}
+          onClose={() => setActiveModalTask(null)}
+          emails={emails}
+          meetings={meetings}
+          newsList={newsList}
+          onNavigateToSource={(type, id) => {
+            if (type === 'email') setActiveTab('inbox');
+            if (type === 'meeting') setActiveTab('meetings');
+            if (type === 'news') setActiveTab('news');
+          }}
+        />
+      )}
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-4 text-center text-xs text-slate-500 dark:text-zinc-400">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-600" />
+            <span className="font-semibold text-slate-700 dark:text-zinc-300">
+              FFMC 06 · Fédération Française des Motards en Colère des Alpes-Maritimes
+            </span>
+          </div>
+          <span className="font-mono text-[11px] text-slate-500 dark:text-zinc-400">
+            Intranet du Conseil d'Administration • Zéro fuite de données • RLS Supabase
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}

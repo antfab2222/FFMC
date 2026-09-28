@@ -1,0 +1,6 @@
+{
+  "name": "Centre de Commande FFMC 06",
+  "description": "Plateforme opérationnelle FFMC 06 : relève email IA, veille réglementaire et actualités, gestion des réunions et suivi des actions avec traçabilité.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
