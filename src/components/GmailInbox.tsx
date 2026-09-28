@@ -50,6 +50,7 @@ export function GmailInbox({
   const [category, setCategory] = useState("all");
   const [topic, setTopic] = useState("all");
   const [direction, setDirection] = useState("reçu");
+  const [smart, setSmart] = useState("important");
   const [reply, setReply] = useState("");
   const message = emails.find((e) => e.id === selected);
   async function reload() {
@@ -114,8 +115,29 @@ export function GmailInbox({
       setBusy("");
     }
   }
+  const smartMatch=(e:EmailMessage)=>{
+    const text=(e.impactAnalysis||"").toLowerCase();
+    if(smart==="all")return true;
+    if(smart==="important")return e.priority==="p0"||e.priority==="p1";
+    if(smart==="reply")return text.includes("à répondre")||Boolean(e.suggestedReply);
+    if(smart==="decide")return text.includes("à débattre")||text.includes("décision");
+    if(smart==="network")return /ffmc|infos-reseau|coordinateurs_|rdp-ffmc/i.test(e.senderEmail+" "+e.subject);
+    if(smart==="news")return e.category==="Actualités"||e.category==="Newsletters";
+    if(smart==="noise")return e.category==="Notifications et publicité"||(e.priority==="p2"&&!e.analyzedAt);
+    return true;
+  };
+  const smartTabs=[
+    ["important","Important",emails.filter(e=>e.priority==="p0"||e.priority==="p1").length],
+    ["reply","À répondre",emails.filter(e=>(e.impactAnalysis||"").toLowerCase().includes("à répondre")||Boolean(e.suggestedReply)).length],
+    ["decide","À décider",emails.filter(e=>/(à débattre|décision)/i.test(e.impactAnalysis||"")).length],
+    ["network","Réseau FFMC",emails.filter(e=>/ffmc|infos-reseau|coordinateurs_|rdp-ffmc/i.test(e.senderEmail+" "+e.subject)).length],
+    ["news","Actualités",emails.filter(e=>e.category==="Actualités"||e.category==="Newsletters").length],
+    ["noise","Archives & bruit",emails.filter(e=>e.category==="Notifications et publicité"||(e.priority==="p2"&&!e.analyzedAt)).length],
+    ["all","Tous",emails.length],
+  ] as const;
   const filtered = emails.filter(
     (e) =>
+      smartMatch(e) &&
       (category === "all" || e.category === category) &&
       (topic === "all" || e.topic === topic) &&
       (direction === "all" || e.direction === direction) &&
@@ -152,7 +174,7 @@ export function GmailInbox({
             {status.lastSync
               ? new Date(status.lastSync).toLocaleString("fr-FR")
               : "aucun"}{" "}
-            · {status.pending} mails en attente d’analyse ·{" "}
+            · {status.aiNewOnlyAfter ? "IA : nouveaux mails uniquement" : status.pending+" mails en attente d’analyse"} ·{" "}
             {status.remainingToday}/20 analyses disponibles aujourd’hui ·{" "}
             {status.autoEnabled
               ? "Relève automatique activée (5 min)"
@@ -181,7 +203,7 @@ export function GmailInbox({
             disabled={
               !!busy ||
               !status?.aiEnabled ||
-              !status?.pending ||
+              !(status?.aiNewOnlyAfter ? true : status?.pending) ||
               !status?.remainingToday
             }
             onClick={() => run("analyze")}
@@ -224,6 +246,9 @@ export function GmailInbox({
           conservées et classées.
         </p>
       </section>
+      <div className="grid sm:grid-cols-3 lg:grid-cols-7 gap-2">
+        {smartTabs.map(([id,label,count])=><button key={id} onClick={()=>setSmart(id)} className={`p-3 rounded-xl border text-left ${smart===id?"border-red-600 bg-red-50 dark:bg-red-950/20":"border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"}`}><strong className="block text-sm">{label}</strong><span className="text-xl font-black">{count}</span></button>)}
+      </div>
       <div className="flex flex-wrap gap-2">
         <input
           aria-label="Rechercher un mail"
