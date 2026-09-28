@@ -71,6 +71,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
   const [impactFilter, setImpactFilter] = useState<string>('all');
   const [feedback, setFeedback] = useState('');
   const [originFilter, setOriginFilter] = useState('all');
+  const [view, setView] = useState<'news'|'network'|'ideas'>('news');
   const [isFetching, setIsFetching] = useState(false);
   const [selectedNewsForTask, setSelectedNewsForTask] = useState<NewsItem | null>(null);
 
@@ -97,6 +98,8 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
     }
   };
 
+  const networkRx=/ffmc|antenne|motards en colère|relais motards|calmos|jti|assises|coordinateurs/i;
+  const ideaRx=/action|opération|initiative|balade|relais|formation|manifestation|atelier|stand|campagne/i;
   const filteredNews = newsList.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,7 +107,9 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
     const matchesSource = sourceFilter === 'all' || item.source === sourceFilter;
     const matchesGeo = geoFilter === 'all' || item.geographicalScope === geoFilter;
     const matchesImpact = impactFilter === 'all' || item.impactLevel === impactFilter;
-    return matchesSearch && matchesSource && matchesGeo && matchesImpact && (originFilter === 'all' || item.origin === originFilter);
+    const network=networkRx.test(`${item.source} ${item.title} ${item.summary} ${item.topic||''}`) || item.origin==='mail';
+    const matchesView=view==='news' ? true : view==='network' ? network : network && ideaRx.test(`${item.title} ${item.summary} ${item.topic||''}`);
+    return matchesSearch && matchesSource && matchesGeo && matchesImpact && matchesView && (originFilter === 'all' || item.origin === originFilter);
   });
 
   const handleToggleBookmark = (item: NewsItem) => {
@@ -176,6 +181,12 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
         </div>
       </div>
 
+      <div className="grid sm:grid-cols-3 gap-2">
+        <button onClick={()=>setView('news')} className={`p-3 rounded-xl border text-left ${view==='news'?'border-red-600 bg-red-50 dark:bg-red-950/20':'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'}`}><strong>Actualités</strong><span className="block text-xs text-slate-500">Toute la veille moto, réglementaire et locale</span></button>
+        <button onClick={()=>setView('network')} className={`p-3 rounded-xl border text-left ${view==='network'?'border-red-600 bg-red-50 dark:bg-red-950/20':'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'}`}><strong>Réseau FFMC</strong><span className="block text-xs text-slate-500">National, antennes et courriers du réseau</span></button>
+        <button onClick={()=>setView('ideas')} className={`p-3 rounded-xl border text-left ${view==='ideas'?'border-red-600 bg-red-50 dark:bg-red-950/20':'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'}`}><strong>Idées à reprendre</strong><span className="block text-xs text-slate-500">Initiatives à étudier pour la FFMC 06</span></button>
+      </div>
+      {view==='ideas'&&<p className="text-xs p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">Ces éléments sont des pistes repérées dans le réseau, pas des décisions du CA. Utilisez « Créer une action » pour les adapter et les soumettre.</p>}
       {feedback && <p role="status" className="text-sm p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">{feedback}</p>}
       <div className="flex gap-2">{[['all','Toutes les informations'],['veille','Veille publique'],['mail','Courriers du réseau']].map(([value,label])=><button key={value} onClick={()=>setOriginFilter(value)} className={`px-3 py-2 rounded-lg text-xs ${originFilter===value?'bg-red-700 text-white':'bg-white dark:bg-zinc-900'}`}>{label}</button>)}</div>
       {!newsList.length && <p className="text-sm text-slate-500">Aucune actualité chargée. Actualisez le fil pour consulter les sources disponibles.</p>}
