@@ -298,9 +298,208 @@ Marc D. - Relations Presse FFMC 06`,
       },
     ],
   },
+  {
+    id: 'eml-105',
+    senderName: 'Secrétariat National FFMC',
+    senderEmail: 'bureau.national@ffmc.asso.fr',
+    subject: 'Circulaire d\'action nationale : Mobilisation interdépartementale et kit militant 2026',
+    snippet: 'Chers coordinateurs d\'antennes, vous trouverez ci-joint les visuels officiels, tracts et consignes...',
+    body: `Chers camarades coordinateurs d'antennes,
+
+Le Bureau National de la FFMC valide le plan d'action interdépartemental pour la rentrée 2026.
+
+Dans le prolongement des audiences au Ministère des Transports et face au refus d'abrogation du Contrôle Technique des deux-roues motorisés (CT2M), nous appelons à une journée d'action coordonnée sur tout le territoire national.
+
+Points clés pour l'antenne FFMC 06 :
+1. Kit militant disponible au téléchargement : affiches, tracts péage gratuit, modèles de lettres pour les élus locaux.
+2. Déclaration officielle de cortège à déposer en préfecture de Nice au moins 3 jours ouvrés avant la date retenue.
+3. Coordination avec les antennes limitrophes (FFMC 83 Var et FFMC 04 Alpes-de-Haute-Provence) pour mutualiser les cortèges sur l'autoroute A8 et les nationales.
+4. Maintien strict de la ligne du boycott citoyen des centres de contrôle technique agréés CT2M.
+
+Amitiés motardes et militantes,
+Le Secrétariat National FFMC
+Montreuil`,
+    receivedAt: '2026-09-28T04:15:00Z',
+    category: 'manif_evenement',
+    priority: 'p1',
+    impactAnalysis: 'Directive nationale majeure : coordination d\'un grand cortège motard dans les Alpes-Maritimes et mutualisation logistique avec le Var.',
+    suggestedReply: `Bonjour à toute l'équipe nationale,
+
+Bien reçu la circulaire et le kit militant pour l'antenne FFMC 06.
+
+Nous avons inscrit le point à l'ordre du jour du CA de ce soir. Notre commission logistique prépare d'ores et déjà la déclaration de parcours Nice - Cannes avec point de rassemblement à Saint-Laurent-du-Var.
+
+Nous nous coordonnons dès demain avec les camarades de la FFMC 83 pour un cortège commun sur l'A8.
+
+Fraternellement,
+Antoine Fabre - Coordinateur Général FFMC 06`,
+    replyStatus: 'approved',
+    isRead: false,
+    tasksExtracted: [
+      {
+        title: 'Déposer la déclaration préalable de manifestation en Préfecture des Alpes-Maritimes',
+        assignee: 'Antoine (Coordinateur)',
+        dueDate: '2026-10-01',
+        priority: 'p1',
+      },
+      {
+        title: 'Contacter la FFMC 83 pour organiser la jonction des cortèges sur l\'A8',
+        assignee: 'Jean-Marc (Commission Voirie)',
+        dueDate: '2026-10-02',
+        priority: 'p1',
+      },
+    ],
+  },
+  {
+    id: 'eml-106',
+    senderName: 'Préfecture des Alpes-Maritimes (Pôle Sécurité Routière)',
+    senderEmail: 'pref-securite-routiere@alpes-maritimes.gouv.fr',
+    subject: 'Audit de terrain des glissières non doublées et trajectoire de sécurité - Cols du 06',
+    snippet: 'Monsieur le Coordinateur, le service de sécurité routière départemental vous convie à un repérage terrain...',
+    body: `Monsieur le Coordinateur de la FFMC 06,
+
+Dans le cadre du plan départemental d'actions de sécurité routière (PDASR 2026) et suite aux observations transmises par votre antenne lors de la dernière commission départementale, les services de l'État et le Conseil Départemental organisent une demi-journée d'audit sur le terrain.
+
+Objectifs de la visite conjointe :
+1. Identification prioritaire des virages à risque nécessitant la pose urgente d'écrans sous-glissières motards (rails guillotines) sur la RD 2565 (Vallée de la Vésubie) et la montée du Col de Vence (RD 2).
+2. Constat des zones dégradées et nids-de-poule signalés par les motards.
+3. Échange sur le programme des ateliers "Trajectoire de sécurité" animés conjointement avec l'Escadron Départemental de Sécurité Routière (EDSR 06).
+
+Date retenue : Mercredi 7 octobre 2026 à 9h00 (départ parking mairie de Plan-du-Var).
+
+Merci de nous indiquer le nom des deux représentants de la FFMC 06 qui participeront à ce repérage.
+
+Respectueusement,
+Le Responsable du Pôle Sécurité Routière
+Préfecture des Alpes-Maritimes (Nice)`,
+    receivedAt: '2026-09-28T05:00:00Z',
+    category: 'contact_institutionnel',
+    priority: 'p0',
+    impactAnalysis: 'Opportunité capitale pour obtenir le financement direct du doublage des glissières mortelles sur les cols majeurs du 06 (Vence et Vésubie).',
+    suggestedReply: `Monsieur le Responsable du Pôle Sécurité Routière,
+
+La FFMC 06 se félicite de cette initiative de terrain concrète, que nous réclamions depuis plusieurs mois.
+
+Nous confirmons notre présence ce mercredi 7 octobre à 9h00 à Plan-du-Var. Notre délégation sera composée de :
+- Antoine Fabre (Coordinateur Général)
+- Jean-Marc (Responsable Commission Voirie & Équipements de Sécurité)
+
+Nous apporterons avec nous le dossier photographique complet et les relevés GPS des points noirs recensés par nos adhérents.
+
+Restant à votre entière disposition,
+Le Bureau FFMC 06`,
+    replyStatus: 'pending',
+    isRead: false,
+    tasksExtracted: [
+      {
+        title: 'Compiler le dossier photo et GPS des glissières non doublées pour l\'audit préfectoral du 7 octobre',
+        assignee: 'Jean-Marc (Commission Voirie)',
+        dueDate: '2026-10-05',
+        priority: 'p0',
+      },
+    ],
+  },
 ];
 
 export const INITIAL_NEWS: NewsItem[] = [
+  {
+    id: 'nws-ffmc-carburant',
+    title: 'FFMC Nationale : Quand le carburant coûte plus cher que ce que le travail rapporte',
+    summary: 'Analyse percutante du Bureau National sur l\'envolée des taxes et du coût des carburants pour les usagers modestes et les motards du quotidien contraints de rouler pour travailler.',
+    source: 'FFMC Nationale',
+    sourceUrl: 'https://ffmc.asso.fr/quand-le-carburant-coute-plus-cher',
+    category: 'reglementation',
+    geographicalScope: 'France',
+    announcementType: 'Mobilisation & Manif',
+    impactLevel: 'fort',
+    publishedAt: '2026-09-28T06:30:00Z',
+    searchDate: '2026-09-28T12:00:00Z',
+    hash: 'hash-ffmc-carburant-cout-travail',
+    keyPoints: [
+      'Dénonciation de la précarité énergétique imposée aux motards et navetteurs pendulaires',
+      'Revendication d\'un bouclier tarifaire sur les carburants professionnels et utilitaires',
+      'Action citoyenne et relais de communication auprès des parlementaires',
+    ],
+    bookmarked: true,
+  },
+  {
+    id: 'nws-ffmc-ministere',
+    title: 'FFMC Nationale au Ministère des Transports : 2 heures d\'audience, peu d\'avancées concrètes',
+    summary: 'La délégation de la FFMC a été reçue pendant 2 heures au Ministère pour aborder le CT2M, la circulation inter-files et l\'entretien des routes. Le gouvernement botte en touche sur les réformes structurelles.',
+    source: 'FFMC Nationale',
+    sourceUrl: 'https://ffmc.asso.fr/la-ffmc-au-ministere-des',
+    category: 'reglementation',
+    geographicalScope: 'France',
+    announcementType: 'Mobilisation & Manif',
+    impactLevel: 'fort',
+    publishedAt: '2026-09-27T17:00:00Z',
+    searchDate: '2026-09-28T12:00:00Z',
+    hash: 'hash-ffmc-audience-ministere-transports',
+    keyPoints: [
+      'Refus du gouvernement d\'aménager le contrôle technique moto',
+      'La FFMC rappelle que seule la mobilisation de terrain fait reculer les technocrates',
+      'Appel confirmé à intensifier le boycott et les cortèges d\'automne',
+    ],
+    bookmarked: true,
+  },
+  {
+    id: 'nws-ffmc-distraction',
+    title: 'FFMC Nationale : Et si on évitait la distraction au volant dès la conception du véhicule ?',
+    summary: 'Rapport technique de la FFMC et de la FEMA sur la prolifération des écrans tactiles surdimensionnés dans les automobiles, cause directe de refus de priorité et de collisions avec les motards.',
+    source: 'FFMC Nationale',
+    sourceUrl: 'https://ffmc.asso.fr/et-si-on-evitait-la-distraction-au',
+    category: 'securite_routiere',
+    geographicalScope: 'Europe',
+    announcementType: 'Recherche & Baromètre',
+    impactLevel: 'moyen',
+    publishedAt: '2026-09-26T14:20:00Z',
+    searchDate: '2026-09-28T12:00:00Z',
+    hash: 'hash-ffmc-distraction-ecrans-tactiles',
+    keyPoints: [
+      'Les écrans automobiles au tableau de bord multiplient par 4 les temps de réaction',
+      'La FFMC exige le retour de boutons physiques pour les fonctions vitales de conduite',
+      'Sécurité accrue pour les deux-roues et usagers vulnérables de la route',
+    ],
+    bookmarked: false,
+  },
+  {
+    id: 'nws-motomag-moteurs',
+    title: 'Moto Magazine : Portraits de moteurs, épisode 1 — J.A.P. 500 4B',
+    summary: 'Plongée passionnante dans l\'histoire mécanique avec le décryptage d\'un monocylindre mythique qui a forgé la légende de la vitesse et de la compétition moto.',
+    source: 'Motomag',
+    sourceUrl: 'https://www.motomag.com/portraits-de-moteurs-episode-1-j-a-p-500-4b/',
+    category: 'reglementation',
+    geographicalScope: 'France',
+    announcementType: 'Infrastructure & Sécurité',
+    impactLevel: 'moyen',
+    publishedAt: '2026-09-25T15:45:00Z',
+    searchDate: '2026-09-28T12:00:00Z',
+    hash: 'hash-motomag-jap500-histoire',
+    keyPoints: [
+      'Culture et patrimoine mécanique moto',
+      'Reportage exclusif rédigé par les journalistes de Motomag',
+    ],
+    bookmarked: false,
+  },
+  {
+    id: 'nws-motomag-trails',
+    title: 'Moto Magazine : FSA Expériences 2026 — la Lozère, des trails et surtout une belle aventure',
+    summary: 'Récit d\'une randonnée trail et aventure au cœur des Cévennes et de la Lozère, valorisant la pratique responsable et solidaire du tout-terrain.',
+    source: 'Motomag',
+    sourceUrl: 'https://www.motomag.com/fsa-experience-2026-lozere-trails-aventure-humaine/',
+    category: 'infrastructure_06',
+    geographicalScope: 'France',
+    announcementType: 'Infrastructure & Sécurité',
+    impactLevel: 'moyen',
+    publishedAt: '2026-09-23T10:00:00Z',
+    searchDate: '2026-09-28T12:00:00Z',
+    hash: 'hash-motomag-fsa-lozere-trails',
+    keyPoints: [
+      'Pratique trail et découverte des pistes rurales ouvertes',
+      'Solidarité et convivialité motarde',
+    ],
+    bookmarked: false,
+  },
   {
     id: 'nws-301',
     title: 'Métropole Nice Côte d’Azur : Nouvel arrêté durcissant le contrôle automatisé LAPI en ZFE côtière',
@@ -340,45 +539,6 @@ export const INITIAL_NEWS: NewsItem[] = [
       'Argument juridique à opposer lors des contrôles ciblés non justifiés',
     ],
     bookmarked: true,
-  },
-  {
-    id: 'nws-303',
-    title: 'FFMC Nationale : Appel à une journée de mobilisation interdépartementale le 17 octobre',
-    summary: 'Le Bureau National appelle l’ensemble des 89 antennes départementales à descendre dans la rue pour dénoncer le racket du CT2M et réclamer un vrai plan national pour l’état des chaussées et la formation routière.',
-    source: 'FFMC Nationale',
-    sourceUrl: 'https://ffmc.asso.fr/manif-nationale-octobre-2026',
-    category: 'manif',
-    geographicalScope: 'France',
-    announcementType: 'Mobilisation & Manif',
-    impactLevel: 'fort',
-    publishedAt: '2026-09-26T18:00:00Z',
-    searchDate: '2026-09-28T03:30:00Z',
-    hash: 'hash-ffmc-appel-manif-17octobre',
-    keyPoints: [
-      'Date retenue : Samedi 17 octobre 2026',
-      'Rassemblements coordonnés dans toutes les préfectures de France',
-      'FFMC 06 coordonnera un cortège Nice - Cannes - Antibes',
-    ],
-    bookmarked: false,
-  },
-  {
-    id: 'nws-304',
-    title: 'Sécurité Routière : Bilan semestriel de l’accidentalité 2RM en région PACA',
-    summary: 'Le baromètre ONISR montre une légère baisse des accidents mortels en agglomération niçoise, mais une surreprésentation des chutes isolées liées aux défauts de voirie et bandes glissantes sur route de montagne.',
-    source: 'Sécurité Routière',
-    sourceUrl: 'https://securite-routiere.gouv.fr/bilan-paca-2026-s1',
-    category: 'securite_routiere',
-    geographicalScope: 'Région Sud',
-    announcementType: 'Recherche & Baromètre',
-    impactLevel: 'moyen',
-    publishedAt: '2026-09-24T10:30:00Z',
-    searchDate: '2026-09-28T03:30:00Z',
-    hash: 'hash-securite-routiere-onisr-paca',
-    keyPoints: [
-      '38% des chutes 2RM hors agglo liées à l’état de la chaussée (gravillons, nids-de-poule)',
-      'Preuve statistique à brandir devant le Conseil Départemental 06',
-    ],
-    bookmarked: false,
   },
   {
     id: 'nws-305',

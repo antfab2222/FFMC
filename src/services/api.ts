@@ -52,7 +52,15 @@ export function saveTasks(tasks: Task[]): void {
 }
 
 export function getStoredEmails(): EmailMessage[] {
-  return loadFromStorage<EmailMessage[]>(STORAGE_KEYS.EMAILS, INITIAL_EMAILS);
+  const stored = loadFromStorage<EmailMessage[]>(STORAGE_KEYS.EMAILS, INITIAL_EMAILS);
+  const existingIds = new Set(stored.map((e) => e.id));
+  const missingInitial = INITIAL_EMAILS.filter((e) => !existingIds.has(e.id));
+  if (missingInitial.length > 0) {
+    const merged = [...missingInitial, ...stored];
+    saveToStorage(STORAGE_KEYS.EMAILS, merged);
+    return merged;
+  }
+  return stored;
 }
 
 export function saveEmails(emails: EmailMessage[]): void {
@@ -60,7 +68,15 @@ export function saveEmails(emails: EmailMessage[]): void {
 }
 
 export function getStoredNews(): NewsItem[] {
-  return loadFromStorage<NewsItem[]>(STORAGE_KEYS.NEWS, INITIAL_NEWS);
+  const stored = loadFromStorage<NewsItem[]>(STORAGE_KEYS.NEWS, INITIAL_NEWS);
+  const existingIds = new Set(stored.map((n) => n.id));
+  const missingInitial = INITIAL_NEWS.filter((n) => !existingIds.has(n.id));
+  if (missingInitial.length > 0) {
+    const merged = [...missingInitial, ...stored];
+    saveToStorage(STORAGE_KEYS.NEWS, merged);
+    return merged;
+  }
+  return stored;
 }
 
 export function saveNews(news: NewsItem[]): void {
