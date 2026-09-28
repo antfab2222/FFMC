@@ -44,7 +44,9 @@ import { SourceTraceabilityModal } from './components/SourceTraceabilityModal';
 import { ConnectionsModal } from './components/ConnectionsModal';
 import { UserManagementModal } from './components/UserManagementModal';
 import { CAMembersManager } from './components/CAMembersManager';
+import { LoginPage } from './components/LoginPage';
 import { fetchLiveNewsRSS } from './services/api';
+import { getSupabaseSession, signOutSupabase } from './services/supabaseService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('today');
@@ -62,6 +64,9 @@ export default function App() {
   const [cronLogs, setCronLogs] = useState<CronLog[]>(getStoredCronLogs);
   const [caMembers, setCaMembers] = useState<CAMember[]>(getStoredCAMembers);
   const [currentUser, setCurrentUser] = useState<CAMember>(getStoredCurrentUser);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('ffmc06_authenticated') === 'true';
+  });
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeModalTask, setActiveModalTask] = useState<Task | null>(null);
@@ -77,6 +82,22 @@ export default function App() {
       }
     });
   }, []);
+
+  // Check active Supabase session on startup
+  useEffect(() => {
+    getSupabaseSession().then((session) => {
+      if (session?.user?.email) {
+        setIsAuthenticated(true);
+        localStorage.setItem('ffmc06_authenticated', 'true');
+        const userEmail = session.user.email.toLowerCase();
+        const matched = caMembers.find((m) => m.email.toLowerCase() === userEmail);
+        if (matched) {
+          setCurrentUser(matched);
+          setUserRole(matched.role);
+        }
+      }
+    }).catch(() => {});
+  }, [caMembers]);
 
   // Synchronize Dark Mode with HTML class
   useEffect(() => {
@@ -173,6 +194,15 @@ export default function App() {
       setUserRole(fallback.role);
     }
     showToast(`Membre ${memberToDelete?.name || ''} retiré du CA.`);
+  };
+
+  // Logout handler (clears Supabase and local session)
+  const handleLogout = async () => {
+    await signOutSupabase();
+    localStorage.removeItem('ffmc06_authenticated');
+    setIsAuthenticated(false);
+    setIsUserModalOpen(false);
+    showToast('Déconnexion effectuée. À bientôt sur l’intranet FFMC 06 !');
   };
 
   // Toggle user role
@@ -350,6 +380,30 @@ export default function App() {
   const pendingEmailsCount = emails.filter((e) => e.replyStatus === 'pending' || e.replyStatus === 'drafted').length;
   const unreadNewsCount = newsList.filter((n) => n.impactLevel === 'fort').length;
 
+  // Login Gate: if not authenticated, show Supabase login page at the start of the app
+  if (!isAuthenticated) {
+    return (
+      <div className={isDarkMode ? 'dark' : ''}>
+        <LoginPage
+          caMembers={caMembers}
+          onLoginSuccess={(member) => {
+            setCurrentUser(member);
+            setUserRole(member.role);
+            setIsAuthenticated(true);
+            localStorage.setItem('ffmc06_authenticated', 'true');
+            showToast(`Bienvenue ${member.name} (${member.title}) !`);
+          }}
+        />
+        {toastMessage && (
+          <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-slate-900 border border-red-500/50 text-white text-xs font-semibold shadow-2xl flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100/90 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 flex flex-col font-sans selection:bg-red-600 selection:text-white transition-colors duration-150">
       {/* Toast Notification */}
@@ -378,6 +432,7 @@ export default function App() {
         onOpenConnections={() => setIsConnectionsOpen(true)}
         currentUser={currentUser}
         onOpenUserModal={() => setIsUserModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -511,6 +566,7 @@ export default function App() {
         onAddMember={handleAddMember}
         onUpdateMember={handleUpdateMember}
         onDeleteMember={handleDeleteMember}
+        onLogout={handleLogout}
       />
 
       {/* Footer */}

@@ -20,6 +20,7 @@ import {
   Lock,
   Share2,
   Check,
+  LogOut,
 } from 'lucide-react';
 import { CAMember, UserRole } from '../types';
 
@@ -32,6 +33,7 @@ interface UserManagementModalProps {
   onAddMember: (newMember: Omit<CAMember, 'id'>) => void;
   onUpdateMember: (updatedMember: CAMember) => void;
   onDeleteMember: (id: string) => void;
+  onLogout?: () => void;
 }
 
 // Password generator utility
@@ -69,6 +71,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   onAddMember,
   onUpdateMember,
   onDeleteMember,
+  onLogout,
 }) => {
   const isCoordinator = currentUser.role === 'coordinateur';
   const [activeTab, setActiveTab] = useState<'members' | 'add' | 'login'>('members');
@@ -844,12 +847,23 @@ Ne partagez pas ces identifiants en dehors du CA.`;
             <Shield className="w-4 h-4 text-emerald-600" />
             <span>Gestion locale sécurisée FFMC 06 · Stockage persistant immédiat</span>
           </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold text-xs hover:opacity-90 transition"
-          >
-            Fermer
-          </button>
+          <div className="flex items-center gap-2">
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3 py-2 rounded-xl border border-red-300 dark:border-red-900/60 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-semibold text-xs flex items-center gap-1.5 transition"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Se déconnecter</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold text-xs hover:opacity-90 transition"
+            >
+              Fermer
+            </button>
+          </div>
         </div>
       </div>
     </div>

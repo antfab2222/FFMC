@@ -23,15 +23,21 @@ export function getSupabaseConfig(): { url: string; key: string } {
   return { url, key };
 }
 
+export function resetSupabaseClient() {
+  clientInstance = null;
+}
+
 export function saveSupabaseKeyLocally(key: string) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('ffmc_supabase_key', key.trim());
+    clientInstance = null;
   }
 }
 
 export function removeSupabaseKeyLocally() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('ffmc_supabase_key');
+    clientInstance = null;
   }
 }
 
@@ -51,6 +57,41 @@ export function getSupabaseClient(): SupabaseClient | null {
     });
   }
   return clientInstance;
+}
+
+export async function signInWithSupabaseEmailPassword(email: string, password: string) {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error('Supabase n\'est pas encore configuré avec une clé API anon.');
+  }
+  return await client.auth.signInWithPassword({ email, password });
+}
+
+export async function signInWithSupabaseMagicLink(email: string) {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error('Supabase n\'est pas encore configuré avec une clé API anon.');
+  }
+  return await client.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.origin + window.location.pathname,
+    },
+  });
+}
+
+export async function signOutSupabase() {
+  const client = getSupabaseClient();
+  if (client) {
+    await client.auth.signOut().catch(() => {});
+  }
+}
+
+export async function getSupabaseSession() {
+  const client = getSupabaseClient();
+  if (!client) return null;
+  const { data } = await client.auth.getSession();
+  return data.session;
 }
 
 export async function testSupabaseConnection(overrideKey?: string): Promise<{ success: boolean; message: string }> {

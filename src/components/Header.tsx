@@ -19,6 +19,7 @@ import {
   Database,
   Radio,
   Users,
+  LogOut,
 } from 'lucide-react';
 import { CronConfig, UserRole, CAMember } from '../types';
 import { ChevronDown, User } from 'lucide-react';
@@ -40,6 +41,7 @@ interface HeaderProps {
   onOpenConnections?: () => void;
   currentUser?: CAMember;
   onOpenUserModal?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -59,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenConnections,
   currentUser,
   onOpenUserModal,
+  onLogout,
 }) => {
   const isCoordinateur = userRole === 'coordinateur';
 
@@ -157,28 +160,40 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* User Profile & Connection Button */}
           {currentUser && onOpenUserModal && (
-            <button
-              onClick={onOpenUserModal}
-              className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-slate-800 dark:text-zinc-200 transition shadow-xs"
-              title="Gérer les utilisateurs, changer de compte ou se connecter par email"
-            >
-              <div
-                className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] shadow-xs ${
-                  currentUser.avatarColor || 'bg-red-700 text-white'
-                }`}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onOpenUserModal}
+                className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-slate-800 dark:text-zinc-200 transition shadow-xs"
+                title="Gérer les utilisateurs, changer de compte ou se connecter par email"
               >
-                {currentUser.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="text-left hidden sm:block">
-                <div className="font-bold text-xs leading-none flex items-center gap-1">
-                  <span>{currentUser.name}</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                <div
+                  className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] shadow-xs ${
+                    currentUser.avatarColor || 'bg-red-700 text-white'
+                  }`}
+                >
+                  {currentUser.name.slice(0, 2).toUpperCase()}
                 </div>
-                <div className="text-[10px] text-slate-500 dark:text-zinc-400 leading-tight">
-                  {currentUser.role === 'coordinateur' ? 'Coordinateur' : 'Membre CA'}
+                <div className="text-left hidden sm:block">
+                  <div className="font-bold text-xs leading-none flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-zinc-400 leading-tight">
+                    {currentUser.role === 'coordinateur' ? 'Coordinateur' : 'Membre CA'}
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 text-slate-500 dark:text-zinc-400 transition shadow-xs"
+                  title="Se déconnecter (Retour à la page de connexion Supabase)"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           )}
 
           {/* Role Preview Button (explained in README: "Le bouton 'Voir la vue membre du CA' permet au coordinateur de prévisualiser la lecture seule.") */}
