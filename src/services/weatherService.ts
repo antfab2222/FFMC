@@ -4,10 +4,10 @@
 export interface MountainPassLive {
   col: string;
   altitude: number;
-  status: 'Normal' | 'Délicat' | 'Travaux' | 'Fermé';
-  temp: number;
-  windSpeed: number;
-  windGusts: number;
+  status: 'Normal' | 'Délicat' | 'Travaux' | 'Fermé' | 'Indisponible';
+  temp: number | null;
+  windSpeed: number | null;
+  windGusts: number | null;
   weatherDesc: string;
   details: string;
   isRealTime: boolean;
@@ -58,7 +58,7 @@ const PASSES_COORDS = [
 ];
 
 function interpretWeatherCode(code: number, temp: number, gusts: number): {
-  status: 'Normal' | 'Délicat' | 'Travaux' | 'Fermé';
+  status: 'Normal' | 'Délicat' | 'Travaux' | 'Fermé' | 'Indisponible';
   weatherDesc: string;
   details: string;
 } {
@@ -77,7 +77,7 @@ function interpretWeatherCode(code: number, temp: number, gusts: number): {
     return {
       status: 'Délicat',
       weatherDesc: 'Chutes de neige',
-      details: `${temp}°C. Neige ou neige fondue. Équipements obligatoires Loi Montagne, non recommandé aux motos.`,
+      details: `${temp}°C. Neige ou neige fondue. Conditions défavorables aux motos ; vérifier les consignes locales.`,
     };
   }
 
@@ -118,7 +118,7 @@ function interpretWeatherCode(code: number, temp: number, gusts: number): {
   return {
     status: 'Normal',
     weatherDesc: condition,
-    details: `${temp}°C, vent ${gusts > 25 ? `rafales ${gusts} km/h` : 'calme'}. Chaussée praticable, conditions favorables.`,
+    details: `${temp}°C, vent ${gusts > 25 ? `rafales ${gusts} km/h` : 'calme'}. Prévision météo uniquement ; ouverture et état de la route à vérifier.`,
   };
 }
 
@@ -155,14 +155,14 @@ export async function fetchLivePassesWeather(): Promise<MountainPassLive[]> {
           return {
             col: p.col,
             altitude: p.altitude,
-            status: 'Normal' as const,
-            temp: 14,
-            windSpeed: 10,
-            windGusts: 18,
-            weatherDesc: 'Sec',
-            details: p.defaultDetails,
+            status: 'Indisponible' as const,
+            temp: null,
+            windSpeed: null,
+            windGusts: null,
+            weatherDesc: 'Données indisponibles',
+            details: 'La météo ne permet pas de confirmer l’ouverture ni l’état de la route.',
             isRealTime: false,
-            updatedAt: 'Estimée',
+            updatedAt: 'Indisponible',
           };
         }
       })
@@ -173,14 +173,14 @@ export async function fetchLivePassesWeather(): Promise<MountainPassLive[]> {
     return PASSES_COORDS.map((p) => ({
       col: p.col,
       altitude: p.altitude,
-      status: 'Normal' as const,
-      temp: 15,
-      windSpeed: 12,
-      windGusts: 20,
-      weatherDesc: 'Sec',
-      details: p.defaultDetails,
+      status: 'Indisponible' as const,
+      temp: null,
+      windSpeed: null,
+      windGusts: null,
+      weatherDesc: 'Données indisponibles',
+      details: 'La météo ne permet pas de confirmer l’ouverture ni l’état de la route.',
       isRealTime: false,
-      updatedAt: 'Estimée',
+      updatedAt: 'Indisponible',
     }));
   }
 }

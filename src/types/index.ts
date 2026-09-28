@@ -73,13 +73,14 @@ export interface CAShare {
   readCount?: number;
 }
 
-export type NewsSource =
+export type NewsSource = string;
+/* export type LegacyNewsSource =
   | 'Légifrance'
   | 'Sécurité Routière'
   | 'Métropole Nice Côte d’Azur'
   | 'FFMC Nationale'
   | 'Motomag'
-  | 'DDTM 06';
+  | 'DDTM 06'; */
 
 export type NewsCategory = 'reglementation' | 'infrastructure_06' | 'manif' | 'securite_routiere' | 'juridique';
 export type NewsGeographicalScope = 'Europe' | 'France' | 'Région Sud' | '06 - Alpes-Maritimes';
@@ -92,7 +93,10 @@ export interface NewsItem {
   sourceUrl: string;
   category: NewsCategory;
   geographicalScope: NewsGeographicalScope;
-  announcementType: 'Législation' | 'Arrêté préfectoral / métropolitain' | 'Mobilisation & Manif' | 'Infrastructure & Sécurité' | 'Recherche & Baromètre';
+  announcementType: string;
+  sourceRefs?: {url: string; label: string; date?: string}[];
+  origin?: 'mail' | 'veille';
+  topic?: string;
   impactLevel: 'fort' | 'moyen' | 'faible';
   publishedAt: string;
   searchDate: string;
@@ -104,6 +108,12 @@ export interface NewsItem {
 
 export interface EmailMessage {
   id: string;
+  threadId?: string;
+  topic?: string;
+  direction?: string;
+  analysisEngine?: string;
+  analyzedAt?: string;
+  truncated?: boolean;
   senderName: string;
   senderEmail: string;
   subject: string;

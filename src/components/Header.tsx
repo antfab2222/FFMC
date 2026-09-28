@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-medium">Accès CA Sécurisé</span>
             <span className="text-slate-300 dark:text-zinc-600">|</span>
             <Radio className="w-3 h-3 text-red-600" />
-            <span>Veille : {cronConfig.intervalMinutes}m</span>
+            <span>Gmail : {cronConfig.enabled ? `${cronConfig.intervalMinutes} min` : 'en pause'}</span>
           </div>
 
           {/* User Profile & Connection Button */}

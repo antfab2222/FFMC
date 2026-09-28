@@ -43,15 +43,15 @@ import { CASharesManager } from './components/CASharesManager';
 import { AutomationCron } from './components/AutomationCronModal';
 import { SourceTraceabilityModal } from './components/SourceTraceabilityModal';
 import { ConnectionsModal } from './components/ConnectionsModal';
-import { UserManagementModal } from './components/UserManagementModal';
-import { CAMembersManager } from './components/CAMembersManager';
 import { LoginPage } from './components/LoginPage';
 import { fetchLiveNewsRSS } from './services/api';
-import { getSupabaseSession, signOutSupabase } from './services/supabaseService';
+import { getSupabaseClient, signOutSupabase } from './services/supabaseService';
+
+import { authenticatedMember, fetchEmails, mailAction, gmailStatus } from './services/backendService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('today');
-  const [userRole, setUserRole] = useState<UserRole>('coordinateur');
+  const [userRole, setUserRole] = useState<UserRole>('membre');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('ffmc_theme') === 'dark';
   });
@@ -65,9 +65,8 @@ export default function App() {
   const [cronLogs, setCronLogs] = useState<CronLog[]>(getStoredCronLogs);
   const [caMembers, setCaMembers] = useState<CAMember[]>(getStoredCAMembers);
   const [currentUser, setCurrentUser] = useState<CAMember>(getStoredCurrentUser);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('ffmc06_authenticated') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeModalTask, setActiveModalTask] = useState<Task | null>(null);
@@ -75,30 +74,43 @@ export default function App() {
   const [isConnectionsOpen, setIsConnectionsOpen] = useState<boolean>(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
 
-  // Background fetch of real live news from FFMC & Motomag
   useEffect(() => {
-    fetchLiveNewsRSS().then((res) => {
-      if (res && res.items && res.items.length > 0) {
-        setNewsList(res.items);
-      }
-    });
+    let alive = true;
+    const check = async () => {
+      try {
+        const member = await authenticatedMember();
+        if (!alive) return;
+        setIsAuthenticated(Boolean(member));
+        if (member) {setCurrentUser(member);setCaMembers([member]);setUserRole(member.role);}
+        else {setEmails([]);setNewsList([]);setActiveEmailDetail(null);}
+      } catch (e: any) { if(alive){setIsAuthenticated(false);setEmails([]);setNewsList([]);setToastMessage(e.message);} }
+      finally { if(alive)setIsCheckingSession(false); }
+    };
+    check();
+    const {data} = getSupabaseClient()!.auth.onAuthStateChange(() => { setTimeout(check, 0); });
+    return () => {alive=false;data.subscription.unsubscribe();};
   }, []);
 
-  // Check active Supabase session on startup
   useEffect(() => {
-    getSupabaseSession().then((session) => {
-      if (session?.user?.email) {
-        setIsAuthenticated(true);
-        localStorage.setItem('ffmc06_authenticated', 'true');
-        const userEmail = session.user.email.toLowerCase();
-        const matched = caMembers.find((m) => m.email.toLowerCase() === userEmail);
-        if (matched) {
-          setCurrentUser(matched);
-          setUserRole(matched.role);
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    async function refresh() {
+      try {
+        const news = await fetchLiveNewsRSS();
+        if(!cancelled)setNewsList(prev => news.items.map(n => ({...n, bookmarked: prev.find(x=>x.id===n.id)?.bookmarked})));
+        if(userRole === 'coordinateur') {
+          const [mail, status, connection] = await Promise.all([fetchEmails(),mailAction('status'),gmailStatus()]);
+          if(!cancelled) {
+            setEmails(prev => mail.map(m => {const old=prev.find(x=>x.id===m.id);return old?.replyStatus==='drafted' ? {...m,suggestedReply:old.suggestedReply,replyStatus:old.replyStatus} : m;}));
+            setCronConfig({enabled:status.autoEnabled,intervalMinutes:5,lastRunAt:status.lastSync,nextRunAt:null,isRunning:false,autoExtractTasks:false,gmailActive:connection.connected,rssActive:false});
+          }
         }
-      }
-    }).catch(() => {});
-  }, [caMembers]);
+      } catch(e: any) {if(!cancelled)setToastMessage(e.message);}
+    }
+    refresh();
+    const timer=setInterval(refresh,60000);
+    return ()=>{cancelled=true;clearInterval(timer);};
+  }, [isAuthenticated,userRole]);
 
   // Synchronize Dark Mode with HTML class
   useEffect(() => {
@@ -146,7 +158,6 @@ export default function App() {
 
   useEffect(() => {
     saveCurrentUser(currentUser);
-    setUserRole(currentUser.role);
   }, [currentUser]);
 
   // Toast notification helper
@@ -202,6 +213,7 @@ export default function App() {
     await signOutSupabase();
     localStorage.removeItem('ffmc06_authenticated');
     setIsAuthenticated(false);
+    setEmails([]); setNewsList([]); setActiveEmailDetail(null);
     setIsUserModalOpen(false);
     showToast('Déconnexion effectuée. À bientôt sur l’intranet FFMC 06 !');
   };
@@ -340,32 +352,18 @@ export default function App() {
     setIsSyncing(true);
     try {
       const res = await triggerCronSync();
-      if (res.log) {
-        setCronLogs((prev) => [res.log, ...prev]);
-      }
-      if (res.config) {
-        setCronConfig(res.config);
-      }
-      // Also fetch fresh news from live feeds
-      const newsRes = await fetchLiveNewsRSS();
-      if (newsRes && newsRes.items && newsRes.items.length > 0) {
-        setNewsList(newsRes.items);
-      }
-      showToast(
-        newsRes?.newCount && newsRes.newCount > 0
-          ? `Relève effectuée : ${newsRes.newCount} nouvelle(s) info(s) ajoutée(s) !`
-          : 'Relève effectuée : données synchronisées avec succès !'
-      );
-    } catch (e) {
-      showToast('Erreur lors de la synchronisation.');
-    } finally {
-      setIsSyncing(false);
-    }
+      setCronLogs(prev => [res.log, ...prev].slice(0,100));
+      const [mail, news] = await Promise.all([fetchEmails(),fetchLiveNewsRSS()]);
+      setEmails(mail);setNewsList(news.items);
+      setCronConfig(prev=>({...prev,lastRunAt:res.log.timestamp}));
+      showToast(res.log.message);
+    } catch(e:any) {showToast(e.message);}
+    finally {setIsSyncing(false);}
   };
-
-  const handleUpdateCronConfig = (partial: Partial<CronConfig>) => {
-    setCronConfig((prev) => ({ ...prev, ...partial }));
-    showToast('Configuration du cron mise à jour.');
+  const handleUpdateCronConfig = async (partial: Partial<CronConfig>) => {
+    if(typeof partial.enabled !== 'boolean') return;
+    try {await mailAction('schedule',{enabled:partial.enabled});setCronConfig(prev=>({...prev,enabled:partial.enabled!}));showToast(partial.enabled?'Relève automatique activée.':'Relève automatique désactivée.');}
+    catch(e:any){showToast(e.message);}
   };
 
   // Urgent counts
@@ -374,6 +372,7 @@ export default function App() {
   const unreadNewsCount = newsList.filter((n) => n.impactLevel === 'fort').length;
 
   // Login Gate: if not authenticated, show Supabase login page at the start of the app
+  if (isCheckingSession) return <div className="p-10 text-center">Vérification de votre session…</div>;
   if (!isAuthenticated) {
     return (
       <div className={isDarkMode ? 'dark' : ''}>
@@ -383,7 +382,7 @@ export default function App() {
             setCurrentUser(member);
             setUserRole(member.role);
             setIsAuthenticated(true);
-            localStorage.setItem('ffmc06_authenticated', 'true');
+
             showToast(`Bienvenue ${member.name} (${member.title}) !`);
           }}
         />
@@ -465,6 +464,7 @@ export default function App() {
 
         {activeTab === 'today' && (
           <TodayMorningBrief
+            userRole={userRole}
             tasks={tasks}
             emails={emails}
             newsList={newsList}
@@ -538,26 +538,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'team' && userRole === 'coordinateur' && (
-          <CAMembersManager
-            caMembers={caMembers}
-            currentUser={currentUser}
-            onSelectUser={handleSelectUser}
-            onAddMember={handleAddMember}
-            onUpdateMember={handleUpdateMember}
-            onDeleteMember={handleDeleteMember}
-          />
-        )}
-
-        {activeTab === 'news' && (
-          <NewsBoard
-            newsList={newsList}
-            onAddNews={handleAddNews}
-            onUpdateNews={handleUpdateNews}
-            onAddTask={handleAddTask}
-            onNavigateTab={setActiveTab}
-          />
-        )}
+        {activeTab === 'team' && userRole === 'coordinateur' && <section className="p-6 rounded-xl bg-white dark:bg-zinc-900"><h2 className="font-bold mb-3">Équipe autorisée</h2><p>{currentUser.name} — {currentUser.title}</p><p className="text-sm text-slate-500 mt-3">Les accès sont gérés dans Supabase. Aucun compte de démonstration n’est activé.</p></section>}
 
         {activeTab === 'cron' && userRole === 'coordinateur' && (
           <AutomationCron
@@ -593,18 +574,7 @@ export default function App() {
         onRefreshData={handleTriggerSync}
       />
 
-      {/* User Switcher, Login & CA Members Modal */}
-      <UserManagementModal
-        isOpen={isUserModalOpen}
-        onClose={() => setIsUserModalOpen(false)}
-        currentUser={currentUser}
-        caMembers={caMembers}
-        onSelectUser={handleSelectUser}
-        onAddMember={handleAddMember}
-        onUpdateMember={handleUpdateMember}
-        onDeleteMember={handleDeleteMember}
-        onLogout={handleLogout}
-      />
+      {isUserModalOpen && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"><div className="bg-white dark:bg-zinc-900 rounded-xl p-6 space-y-4"><h2 className="font-bold">Compte connecté</h2><p>{currentUser.name} · {currentUser.email}</p><p>{currentUser.title}</p><button className="px-3 py-2 rounded bg-slate-100 dark:bg-zinc-800" onClick={()=>setIsUserModalOpen(false)}>Fermer</button><button className="px-3 py-2 text-red-700" onClick={handleLogout}>Se déconnecter</button></div></div>}
 
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-4 text-center text-xs text-slate-500 dark:text-zinc-400">

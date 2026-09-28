@@ -49,7 +49,7 @@ export const MeetingsManager: React.FC<MeetingsManagerProps> = ({
     new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 16)
   );
   const [newMeetingLocation, setNewMeetingLocation] = useState('Maison des Associations Garibaldi, Nice');
-  const [newMeetingAttendees, setNewMeetingAttendees] = useState('Antoine, Jean-Marc, Sophie, Marc');
+  const [newMeetingAttendees, setNewMeetingAttendees] = useState('');
   const [newMeetingAgenda, setNewMeetingAgenda] = useState(
     '1. Bilan des actions du mois\n2. Dossiers voirie urgents\n3. Points financiers et adhésions\n4. Questions diverses'
   );
@@ -460,9 +460,6 @@ export const MeetingsManager: React.FC<MeetingsManagerProps> = ({
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none"
                   >
                     <option value="Antoine (Coordinateur)">Antoine (Coordinateur)</option>
-                    <option value="Jean-Marc (Commission Voirie)">Jean-Marc (Commission Voirie)</option>
-                    <option value="Sophie (Trésorière/Adhésions)">Sophie (Trésorière/Adhésions)</option>
-                    <option value="Marc (Relations Presse)">Marc (Relations Presse)</option>
                     <option value="Bureau FFMC 06">Bureau FFMC 06</option>
                   </select>
                 </div>

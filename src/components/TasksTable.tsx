@@ -557,9 +557,6 @@ export const TasksTable: React.FC<TasksTableProps> = ({
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-zinc-100 focus:outline-none"
                   >
                     <option value="Antoine (Coordinateur)">Antoine (Coordinateur)</option>
-                    <option value="Jean-Marc (Commission Voirie)">Jean-Marc (Commission Voirie)</option>
-                    <option value="Sophie (Trésorière/Adhésions)">Sophie (Trésorière/Adhésions)</option>
-                    <option value="Marc (Relations Presse)">Marc (Relations Presse)</option>
                     <option value="Bureau FFMC 06">Bureau FFMC 06</option>
                   </select>
                 </div>

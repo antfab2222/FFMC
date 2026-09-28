@@ -6,3 +6,7 @@ verify_jwt = false
 [functions.mail-assistant]
 # Handler authenticates user JWT + coordinator role, or single-use scoped cron token.
 verify_jwt = false
+
+[functions.news-feed]
+# Handler verifies the user JWT and coordinator role before fetching fixed public feeds.
+verify_jwt = false

@@ -22,7 +22,6 @@ import {
   Thermometer,
 } from 'lucide-react';
 import { Task, EmailMessage, NewsItem, MorningBriefing, UserRole } from '../types';
-import { INITIAL_MORNING_BRIEF } from '../data/mockData';
 import { fetchLivePassesWeather, MountainPassLive } from '../services/weatherService';
 
 interface TodayMorningBriefProps {
@@ -46,7 +45,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
   onViewTaskSource,
   onOpenEmail,
 }) => {
-  const [briefing, setBriefing] = useState<MorningBriefing>(INITIAL_MORNING_BRIEF);
+  const summary = `${tasks.filter(t=>t.priority==='p0'&&!['completed','cancelled'].includes(t.status)).length} action(s) urgente(s). ${userRole==='coordinateur' ? `${emails.length} mail(s) importé(s), dont ${emails.filter(e=>!e.analyzedAt).length} à analyser. ` : ''}${newsList.length} information(s) sourcée(s) disponibles dans la veille.`;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [livePasses, setLivePasses] = useState<MountainPassLive[]>([]);
@@ -78,7 +77,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
   });
 
   const urgentTasks = tasks.filter((t) => t.priority === 'p0' && t.status !== 'completed');
-  const dueTodayTasks = tasks.filter((t) => t.status !== 'completed');
+  const dueTodayTasks = tasks.filter(t => !['completed','cancelled'].includes(t.status) && t.dueDate && t.dueDate <= new Date().toLocaleDateString('sv-SE'));
   const pendingEmails = emails.filter((e) => e.replyStatus === 'pending' || e.replyStatus === 'drafted');
   const highImpactNews = newsList.filter((n) => n.impactLevel === 'fort');
 
@@ -92,7 +91,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      const utterance = new SpeechSynthesisUtterance(briefing.summary);
+      const utterance = new SpeechSynthesisUtterance(summary);
       utterance.lang = 'fr-FR';
       utterance.rate = 1.05;
       utterance.onend = () => setIsSpeaking(false);
@@ -102,20 +101,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
     }
   };
 
-  const regenerateAIBrief = async () => {
-    setIsRegenerating(true);
-    try {
-      setTimeout(() => {
-        setBriefing((prev) => ({
-          ...prev,
-          summary: `Synthèse FFMC 06 actualisée à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} : ${urgentTasks.length} urgence(s) active(s) sur le terrain, dont le dossier prioritaire de la RM6202. ${pendingEmails.length} proposition(s) de réponse par email sont prêtes pour validation. Suivi attentif de la parution des arrêtés ZFE sur la métropole niçoise.`,
-        }));
-        setIsRegenerating(false);
-      }, 600);
-    } catch {
-      setIsRegenerating(false);
-    }
-  };
+  const regenerateAIBrief = () => loadPassesWeather();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -135,7 +121,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 leading-relaxed font-normal whitespace-pre-line">
-              {briefing.summary}
+              {summary}
             </p>
           </div>
 
@@ -161,7 +147,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 transition"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-red-600 dark:text-red-400 ${isRegenerating ? 'animate-spin' : ''}`} />
-                <span>{isRegenerating ? 'Actualisation...' : 'Rafraîchir synthèse IA'}</span>
+                <span>{isRegenerating ? 'Actualisation...' : 'Actualiser la météo'}</span>
               </button>
             )}
           </div>
@@ -358,7 +344,7 @@ export const TodayMorningBrief: React.FC<TodayMorningBriefProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {(livePasses.length > 0 ? livePasses : briefing.weatherMountainPasses).map((pass: any) => {
+              {livePasses.map((pass: any) => {
                 const isDelicat = pass.status === 'Délicat';
                 const isTravaux = pass.status === 'Travaux';
                 const hasTemp = typeof pass.temp === 'number';

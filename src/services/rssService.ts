@@ -1,139 +1,108 @@
-// Service de veille en direct pour les flux officiels FFMC & Moto Magazine
+import { database, invoke } from "./backendService";
 
-import { NewsItem, NewsSource, NewsCategory, NewsGeographicalScope } from '../types';
-
-function decodeHtmlEntities(str: string): string {
-  try {
-    const doc = new DOMParser().parseFromString(str, 'text/html');
-    return doc.documentElement.textContent || str;
-  } catch {
-    return str
-      .replace(/&#251;/g, 'û')
-      .replace(/&#233;/g, 'é')
-      .replace(/&#224;/g, 'à')
-      .replace(/&#232;/g, 'è')
-      .replace(/&#234;/g, 'ê')
-      .replace(/&#238;/g, 'î')
-      .replace(/&#244;/g, 'ô')
-      .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&');
-  }
+function plain(html: string) {
+  return (
+    new DOMParser()
+      .parseFromString(html, "text/html")
+      .body.textContent?.trim() || ""
+  );
 }
-
-export async function fetchLiveRssNews(): Promise<NewsItem[]> {
-  const liveItems: NewsItem[] = [];
-
-  const feeds: Array<{
-    source: NewsSource;
-    category: NewsCategory;
-    scope: NewsGeographicalScope;
-    announcementType: 'Mobilisation & Manif' | 'Infrastructure & Sécurité' | 'Législation';
-    url: string;
-  }> = [
-    {
-      source: 'FFMC Nationale',
-      category: 'manif',
-      scope: 'France',
-      announcementType: 'Mobilisation & Manif',
-      url: 'https://ffmc.asso.fr/spip.php?page=backend',
-    },
-    {
-      source: 'Motomag',
-      category: 'reglementation',
-      scope: 'France',
-      announcementType: 'Infrastructure & Sécurité',
-      url: 'https://motomag.com/feed/',
-    },
-  ];
-
-  for (const feed of feeds) {
-    try {
-      let rawXml = '';
-
-      // 1. Try local server proxy first (running on dev / fullstack server)
+export function parseFeed(xml: string, source: string, checkedAt: string) {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  if (doc.querySelector("parsererror"))
+    throw new Error(`${source} : flux illisible.`);
+  return Array.from(doc.querySelectorAll("item, entry"))
+    .slice(0, 30)
+    .flatMap((item) => {
+      const title = plain(item.querySelector("title")?.textContent || "");
+      const linkNode = item.querySelector("link");
+      const rawUrl =
+        linkNode?.getAttribute("href") || linkNode?.textContent?.trim() || "";
+      let url: URL;
       try {
-        const localRes = await fetch(`/api/news/rss-proxy?url=${encodeURIComponent(feed.url)}`);
-        if (localRes.ok) {
-          rawXml = await localRes.text();
-        }
+        url = new URL(rawUrl);
+        if (!["https:", "http:"].includes(url.protocol)) return [];
       } catch {
-        // Fallback for static client
+        return [];
       }
-
-      // 2. Try fast client-side CORS proxies
-      if (!rawXml) {
-        const proxyUrls = [
-          `https://corsproxy.io/?url=${encodeURIComponent(feed.url)}`,
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`,
-        ];
-
-        for (const proxyUrl of proxyUrls) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const proxyRes = await fetch(proxyUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (proxyRes.ok) {
-              const text = await proxyRes.text();
-              if (text && (text.includes('<rss') || text.includes('<channel'))) {
-                rawXml = text;
-                break;
-              }
-            }
-          } catch {
-            // Try next proxy
-          }
-        }
+      url.hash = "";
+      ["utm_source", "utm_medium", "utm_campaign"].forEach((key) =>
+        url.searchParams.delete(key),
+      );
+      const date =
+        item.querySelector("pubDate, published, updated")?.textContent ||
+        Array.from(item.children).find((n) => n.localName === "date")
+          ?.textContent;
+      // Unknown publication dates must not be represented as today's news.
+      if (!title || !date || !Number.isFinite(Date.parse(date))) return [];
+      const excerpt = plain(
+        item.querySelector("description, summary, content")?.textContent || "",
+      ).slice(0, 4000);
+      const lower = `${title} ${excerpt}`.toLowerCase();
+      const topic = /contrôle technique|controle technique|ct2rm/.test(lower)
+        ? "CT moto"
+        : /manifestation|mobilisation/.test(lower)
+          ? "Manifestations"
+          : /route|circulation|infrastructure/.test(lower)
+            ? "Circulation et infrastructures"
+            : /loi|décret|directive|règlement/.test(lower)
+              ? "Politique et réglementation"
+              : "Actualités générales";
+      return [
+        {
+          dedupe_key: `rss:${url.href}`,
+          kind: "veille",
+          topic,
+          title: title.slice(0, 250),
+          body: excerpt || "Consultez l’article source.",
+          status: "À suivre",
+          source_refs: [
+            {
+              label: source,
+              url: url.href,
+              date: new Date(date).toISOString().slice(0, 10),
+            },
+          ],
+          published_at: new Date(date).toISOString(),
+          news_scope: /europé|union européenne|bruxelles/.test(lower)
+            ? "Europe"
+            : "France",
+          news_type: "Information",
+          importance: "À suivre",
+          impact:
+            "Extrait du flux source. Classement indicatif par mots-clés ; portée et conséquences à vérifier dans l’article.",
+          verified_at: null,
+        },
+      ];
+    });
+}
+export async function refreshNewsFeeds() {
+  const result = await invoke("news-feed", {});
+  let added = 0;
+  const errors: string[] = [];
+  for (const feed of result.feeds) {
+    if (feed.error) {
+      errors.push(`${feed.source} : ${feed.error}`);
+      continue;
+    }
+    try {
+      const rows = parseFeed(feed.xml, feed.source, result.checkedAt);
+      if (!rows.length) {
+        errors.push(`${feed.source} : aucun article daté exploitable.`);
+        continue;
       }
-
-      if (rawXml) {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(rawXml, 'text/xml');
-        const items = xmlDoc.querySelectorAll('item');
-
-        items.forEach((itemNode, idx) => {
-          if (idx >= 6) return;
-          const rawTitle = itemNode.querySelector('title')?.textContent?.trim() || '';
-          const title = decodeHtmlEntities(rawTitle);
-          const link = itemNode.querySelector('link')?.textContent?.trim() || 'https://ffmc.asso.fr';
-          const pubDate = itemNode.querySelector('pubDate')?.textContent?.trim() || new Date().toISOString();
-          const descriptionRaw = itemNode.querySelector('description')?.textContent?.trim() || '';
-          const cleanDesc = decodeHtmlEntities(descriptionRaw.replace(/<[^>]*>?/gm, '')).slice(0, 260);
-
-          if (title) {
-            liveItems.push({
-              id: `rss-${feed.source.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${idx}`,
-              title,
-              summary: cleanDesc || 'Article d’actualité officiel publié en direct.',
-              source: feed.source,
-              sourceUrl: link,
-              category: feed.category,
-              geographicalScope: feed.scope,
-              announcementType: feed.announcementType,
-              impactLevel:
-                title.toLowerCase().includes('loi') ||
-                title.toLowerCase().includes('contrôle') ||
-                title.toLowerCase().includes('manif') ||
-                title.toLowerCase().includes('carburant') ||
-                title.toLowerCase().includes('ministère')
-                  ? 'fort'
-                  : 'moyen',
-              publishedAt: new Date(pubDate).toISOString(),
-              searchDate: new Date().toISOString(),
-              hash: `hash-${title.slice(0, 15).replace(/\s+/g, '')}`,
-              keyPoints: [
-                `Flux direct ${feed.source}`,
-                cleanDesc.slice(0, 100) || 'Information vérifiée par la FFMC',
-              ],
-            });
-          }
-        });
-      }
-    } catch (err) {
-      console.warn(`Impossible de relever le flux ${feed.source}:`, err);
+      const unique = [
+        ...new Map(rows.map((row) => [row.dedupe_key, row])).values(),
+      ];
+      const { data, error } = await database()
+        .from("ca_news_items")
+        .upsert(unique, { onConflict: "dedupe_key", ignoreDuplicates: true })
+        .select("id");
+      if (error) throw error;
+      added += data.length;
+    } catch (e: any) {
+      errors.push(e.message);
     }
   }
-
-  return liveItems;
+  return { added, errors };
 }

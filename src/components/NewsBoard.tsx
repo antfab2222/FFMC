@@ -20,6 +20,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { NewsItem, NewsSource, NewsCategory, NewsGeographicalScope, Task } from '../types';
+import { refreshNewsFeeds } from '../services/rssService';
 import { fetchLiveNewsRSS } from '../services/api';
 
 interface NewsBoardProps {
@@ -68,11 +69,13 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [geoFilter, setGeoFilter] = useState<string>('all');
   const [impactFilter, setImpactFilter] = useState<string>('all');
+  const [feedback, setFeedback] = useState('');
+  const [originFilter, setOriginFilter] = useState('all');
   const [isFetching, setIsFetching] = useState(false);
   const [selectedNewsForTask, setSelectedNewsForTask] = useState<NewsItem | null>(null);
 
   // Task creation form state from news
-  const [taskAssignee, setTaskAssignee] = useState('Marc (Relations Presse)');
+  const [taskAssignee, setTaskAssignee] = useState('À attribuer');
   const [taskPriority, setTaskPriority] = useState<'p0' | 'p1' | 'p2' | 'p3'>('p1');
   const [taskDueDate, setTaskDueDate] = useState(
     new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0]
@@ -81,13 +84,15 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
   const handleRefreshRSS = async () => {
     setIsFetching(true);
     try {
+      const result = await refreshNewsFeeds();
       const data = await fetchLiveNewsRSS();
       if (data.items && data.items.length > 0) {
         data.items.forEach((item: NewsItem) => {
           onAddNews(item);
         });
       }
-    } finally {
+      setFeedback(`${result.added} nouvelle(s) actualité(s). ${result.errors.join(' · ')}`);
+    } catch (e: any) { setFeedback(e.message); } finally {
       setIsFetching(false);
     }
   };
@@ -99,7 +104,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
     const matchesSource = sourceFilter === 'all' || item.source === sourceFilter;
     const matchesGeo = geoFilter === 'all' || item.geographicalScope === geoFilter;
     const matchesImpact = impactFilter === 'all' || item.impactLevel === impactFilter;
-    return matchesSearch && matchesSource && matchesGeo && matchesImpact;
+    return matchesSearch && matchesSource && matchesGeo && matchesImpact && (originFilter === 'all' || item.origin === originFilter);
   });
 
   const handleToggleBookmark = (item: NewsItem) => {
@@ -115,7 +120,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
 
     onAddTask({
       title: `Action veille : ${selectedNewsForTask.title.slice(0, 65)}`,
-      description: `Créée suite à la parution officielle (${selectedNewsForTask.source}) : ${selectedNewsForTask.summary}`,
+      description: `Créée suite à la source publiée (${selectedNewsForTask.source}) : ${selectedNewsForTask.summary}`,
       status: 'todo',
       priority: taskPriority,
       assignee: taskAssignee,
@@ -149,7 +154,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
               News moto & politique
             </h2>
             <p className="text-xs text-slate-500 dark:text-zinc-400">
-              Fil sourcé Europe · France · Région Sud · 06 · Déduplication sémantique
+              Sources publiques et courriers du réseau · Classement par sujet et périmètre
             </p>
           </div>
         </div>
@@ -157,7 +162,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
         <div className="flex items-center gap-2.5">
           <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-zinc-800 text-[11px] font-medium text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700">
             <Clock className="w-3 h-3 text-emerald-600" />
-            Veille horaire active
+            Données sourcées
           </span>
 
           <button
@@ -171,6 +176,9 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
         </div>
       </div>
 
+      {feedback && <p role="status" className="text-sm p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">{feedback}</p>}
+      <div className="flex gap-2">{[['all','Toutes les informations'],['veille','Veille publique'],['mail','Courriers du réseau']].map(([value,label])=><button key={value} onClick={()=>setOriginFilter(value)} className={`px-3 py-2 rounded-lg text-xs ${originFilter===value?'bg-red-700 text-white':'bg-white dark:bg-zinc-900'}`}>{label}</button>)}</div>
+      {!newsList.length && <p className="text-sm text-slate-500">Aucune actualité chargée. Actualisez le fil pour consulter les sources disponibles.</p>}
       {/* Filter and Search Bar */}
       <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-3.5 flex flex-wrap items-center gap-2.5 shadow-sm">
         <div className="relative flex-1 min-w-[220px]">
@@ -203,11 +211,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
           className="px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs font-medium text-slate-700 dark:text-zinc-200 focus:outline-none"
         >
           <option value="all">Toutes sources ({newsList.length})</option>
-          <option value="Légifrance">Légifrance</option>
-          <option value="Sécurité Routière">Sécurité Routière</option>
-          <option value="Métropole Nice Côte d’Azur">Métropole Nice Côte d’Azur</option>
-          <option value="FFMC Nationale">FFMC Nationale</option>
-          <option value="DDTM 06">DDTM 06</option>
+          {[...new Set(newsList.map(n=>n.source))].sort().map(source=><option key={source}>{source}</option>)}
         </select>
 
         <select
@@ -290,7 +294,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
                 </h3>
 
                 {/* Summary */}
-                <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed line-clamp-3">
+                <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
                   {item.summary}
                 </p>
 
@@ -302,7 +306,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
                     </span>
                     <ul className="text-[11px] text-slate-600 dark:text-zinc-400 space-y-0.5 list-disc list-inside">
                       {item.keyPoints.map((kp, idx) => (
-                        <li key={idx} className="truncate">
+                        <li key={idx} className="whitespace-pre-line">
                           {kp}
                         </li>
                       ))}
@@ -311,6 +315,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
                 )}
               </div>
 
+              {item.sourceRefs && <details className="mt-3 text-xs"><summary className="cursor-pointer font-semibold">Sources et traçabilité ({item.sourceRefs.length})</summary>{item.sourceRefs.map((ref,i)=><a key={i} href={ref.url} target="_blank" rel="noreferrer" className="block underline my-2 break-words">{ref.label}{ref.date ? ` · ${ref.date}` : ''} ↗</a>)}</details>}
               {/* Card Footer: direct action, link, and search date */}
               <div className="pt-3.5 mt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
                 <div className="text-[10px] text-slate-400 dark:text-zinc-500 space-y-0.5">
@@ -323,7 +328,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
                     target="_blank"
                     rel="noreferrer"
                     className="p-1.5 rounded text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 transition"
-                    title="Voir la source officielle"
+                    title="Consulter la source"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -372,10 +377,7 @@ export const NewsBoard: React.FC<NewsBoardProps> = ({
                   onChange={(e) => setTaskAssignee(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-zinc-100 focus:outline-none"
                 >
-                  <option value="Marc (Relations Presse)">Marc (Relations Presse)</option>
-                  <option value="Antoine (Coordinateur)">Antoine (Coordinateur)</option>
-                  <option value="Jean-Marc (Commission Voirie)">Jean-Marc (Commission Voirie)</option>
-                  <option value="Sophie (Trésorière/Adhésions)">Sophie (Trésorière/Adhésions)</option>
+                  <option value="À attribuer">À attribuer</option><option value="Antoine (Coordinateur)">Antoine (Coordinateur)</option>
                   <option value="Bureau FFMC 06">Bureau FFMC 06</option>
                 </select>
               </div>

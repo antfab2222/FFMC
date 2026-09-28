@@ -77,7 +77,7 @@ export async function sendSupabaseOtpCode(email: string) {
   return await client.auth.signInWithOtp({
     email,
     options: {
-      shouldCreateUser: true,
+      shouldCreateUser: false,
     },
   });
 }
@@ -138,10 +138,10 @@ export async function testSupabaseConnection(overrideKey?: string): Promise<{ su
     const { error } = await tempClient.from('ca_publications').select('count', { count: 'exact', head: true });
     
     // An RLS 401/403 or success indicates the key is recognized by Supabase
-    if (error && error.message.includes('API key not found')) {
+    if (error) {
       return {
         success: false,
-        message: 'Clé API Supabase invalide.',
+        message: error.message,
       };
     }
 
