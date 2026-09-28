@@ -21,13 +21,15 @@ export default function MeetingReportImport({onImported}:Props){
    const up=await supabase.storage.from('ca-meeting-reports').upload(path,file,{contentType:'application/pdf',upsert:false});if(up.error)throw up.error;
    const ins=await supabase.from('ca_meeting_reports').insert({file_name:file.name,storage_path:path,uploaded_by:user.id,status:'À analyser'}).select('id').single();
    if(ins.error){await supabase.storage.from('ca-meeting-reports').remove([path]);throw ins.error}
-   toast.success('Compte rendu PDF déposé.');await load();onImported?.();
+   toast.success('PDF déposé — analyse en cours…');await load();
+   const run=await supabase.functions.invoke('meeting-report-analyze',{body:{id:ins.data.id}});if(run.error||run.data?.error)throw Error(run.data?.error||'Analyse impossible.');
+   toast.success(`Compte rendu analysé : ${run.data?.created||0} action(s) préparée(s).`);await load();onImported?.();
   }catch(e){toast.error(e instanceof Error?e.message:'Import impossible.')}finally{setBusy(false);if(input.current)input.current.value=''}
  }
  return <section className="meeting-import">
-  <div className="section-head"><div><h2>Comptes rendus PDF</h2><p className="muted">Dépose le PDF original ici. Il reste privé dans l’espace CA et sera préparé pour analyse.</p></div>
-  <button className="primary" disabled={busy} onClick={()=>input.current?.click()}><FileUp size={18}/>{busy?'Import…':'Importer un PDF'}</button></div>
+  <div className="section-head"><div><h2>Comptes rendus PDF</h2><p className="muted">Dépose le PDF original ici. Il reste privé dans l’espace CA ; décisions, actions, responsables et échéances sont extraits automatiquement.</p></div>
+  <button className="primary" disabled={busy} onClick={()=>input.current?.click()}><FileUp size={18}/>{busy?'Analyse…':'Importer et analyser'}</button></div>
   <input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={e=>upload(e.target.files?.[0])}/>
-  {reports.length>0&&<div className="cards">{reports.map(r=><div className="record" key={r.id}><div className="record-top"><span className="badge">{r.status}</span>{r.status==='Analysé'?<CheckCircle2 size={17}/>:<FileText size={17}/>}</div><h3>{r.file_name}</h3><p>{r.analysis?.summary||'PDF conservé — analyse à venir.'}</p><div className="record-bottom"><span>Compte rendu CA</span><span>{new Date(r.uploaded_at).toLocaleDateString('fr-FR')}</span></div></div>)}</div>}
+  {reports.length>0&&<div className="cards">{reports.map(r=><div className="record" key={r.id}><div className="record-top"><span className="badge">{r.status}</span>{r.status==='Analysé'?<CheckCircle2 size={17}/>:<FileText size={17}/>}</div><h3>{r.file_name}</h3><p>{r.analysis?.summary||(r.status==='Analyse en cours'?'Analyse du compte rendu…':'PDF conservé — en attente d’analyse.')}</p><div className="record-bottom"><span>Compte rendu CA</span><span>{new Date(r.uploaded_at).toLocaleDateString('fr-FR')}</span></div></div>)}</div>}
  </section>
 }
