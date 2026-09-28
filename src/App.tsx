@@ -501,6 +501,16 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'news' && (
+          <NewsBoard
+            newsList={newsList}
+            onAddNews={handleAddNews}
+            onUpdateNews={handleUpdateNews}
+            onAddTask={handleAddTask}
+            onNavigateTab={setActiveTab}
+          />
+        )}
+
         {activeTab === 'meetings' && userRole === 'coordinateur' && (
           <MeetingsManager
             meetings={meetings}
