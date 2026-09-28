@@ -595,6 +595,7 @@ export const INITIAL_CA_MEMBERS = [
     title: 'Coordinateur Général FFMC 06',
     avatarColor: 'bg-red-700 text-white',
     phone: '06 12 34 56 78',
+    password: 'FFMC06-Coord!2026',
   },
   {
     id: 'usr-jeanmarc',
@@ -604,6 +605,7 @@ export const INITIAL_CA_MEMBERS = [
     title: 'Référent Commission Voirie & Sécurité',
     avatarColor: 'bg-blue-600 text-white',
     phone: '06 98 76 54 32',
+    password: 'Voirie-06-Securite',
   },
   {
     id: 'usr-sophie',
@@ -613,6 +615,7 @@ export const INITIAL_CA_MEMBERS = [
     title: 'Trésorière & Gestion des Adhésions',
     avatarColor: 'bg-emerald-600 text-white',
     phone: '06 45 67 89 01',
+    password: 'Tresor-FFMC-06',
   },
   {
     id: 'usr-david',
@@ -622,6 +625,7 @@ export const INITIAL_CA_MEMBERS = [
     title: 'Communication & Réseaux Sociaux',
     avatarColor: 'bg-purple-600 text-white',
     phone: '06 23 45 67 89',
+    password: 'Com-Motard-06',
   },
   {
     id: 'usr-pierre',
@@ -631,6 +635,7 @@ export const INITIAL_CA_MEMBERS = [
     title: 'Événements & Relais Motards',
     avatarColor: 'bg-amber-600 text-white',
     phone: '06 34 56 78 90',
+    password: 'Relais-Calern-06',
   },
   {
     id: 'usr-helene',
@@ -640,5 +645,6 @@ export const INITIAL_CA_MEMBERS = [
     title: 'Secrétariat & Relations Adhérents',
     avatarColor: 'bg-teal-600 text-white',
     phone: '06 56 78 90 12',
+    password: 'Secretariat-06-Adh',
   },
 ];

@@ -48,6 +48,8 @@ export interface CAMember {
   title: string;
   avatarColor?: string;
   phone?: string;
+  password?: string;
+  lastLogin?: string;
 }
 
 export interface CAShare {

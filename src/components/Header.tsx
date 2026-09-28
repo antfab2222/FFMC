@@ -18,6 +18,7 @@ import {
   Moon,
   Database,
   Radio,
+  Users,
 } from 'lucide-react';
 import { CronConfig, UserRole, CAMember } from '../types';
 import { ChevronDown, User } from 'lucide-react';
@@ -98,6 +99,12 @@ export const Header: React.FC<HeaderProps> = ({
       badgeColor: 'bg-blue-600',
     },
     {
+      id: 'team',
+      label: 'Équipe & Acteurs CA',
+      icon: Users,
+      restrictedForMember: true,
+    },
+    {
       id: 'news',
       label: 'News moto & politique',
       icon: Newspaper,
@@ -142,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Status indicators */}
           <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 text-[11px] text-slate-600 dark:text-zinc-300">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            <span className="font-medium">Supabase RLS</span>
+            <span className="font-medium">Accès CA Sécurisé</span>
             <span className="text-slate-300 dark:text-zinc-600">|</span>
             <Radio className="w-3 h-3 text-red-600" />
             <span>Veille : {cronConfig.intervalMinutes}m</span>

@@ -43,6 +43,7 @@ import { AutomationCron } from './components/AutomationCronModal';
 import { SourceTraceabilityModal } from './components/SourceTraceabilityModal';
 import { ConnectionsModal } from './components/ConnectionsModal';
 import { UserManagementModal } from './components/UserManagementModal';
+import { CAMembersManager } from './components/CAMembersManager';
 import { fetchLiveNewsRSS } from './services/api';
 
 export default function App() {
@@ -148,6 +149,32 @@ export default function App() {
     showToast(`Membre ${newMember.name} ajouté au CA !`);
   };
 
+  const handleUpdateMember = (updatedMember: CAMember) => {
+    setCaMembers((prev) =>
+      prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+    );
+    if (currentUser.id === updatedMember.id) {
+      setCurrentUser(updatedMember);
+      setUserRole(updatedMember.role);
+    }
+    showToast(`Acteur ${updatedMember.name} mis à jour`);
+  };
+
+  const handleDeleteMember = (id: string) => {
+    if (caMembers.length <= 1) {
+      showToast('Impossible de supprimer le dernier membre du CA.');
+      return;
+    }
+    const memberToDelete = caMembers.find((m) => m.id === id);
+    setCaMembers((prev) => prev.filter((m) => m.id !== id));
+    if (currentUser.id === id) {
+      const fallback = caMembers.find((m) => m.id !== id) || caMembers[0];
+      setCurrentUser(fallback);
+      setUserRole(fallback.role);
+    }
+    showToast(`Membre ${memberToDelete?.name || ''} retiré du CA.`);
+  };
+
   // Toggle user role
   const handleToggleUserRole = () => {
     const nextRole = userRole === 'coordinateur' ? 'membre' : 'coordinateur';
@@ -158,7 +185,7 @@ export default function App() {
         ? 'Vue Membre du CA activée (Accès restreint aux publications & synthèses)'
         : 'Vue Coordinateur activée (Accès complet au Centre de commande)'
     );
-    if (nextRole === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron'].includes(activeTab)) {
+    if (nextRole === 'membre' && ['dashboard', 'inbox', 'meetings', 'cron', 'team'].includes(activeTab)) {
       setActiveTab('today');
     }
   };
@@ -419,6 +446,17 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'team' && (
+          <CAMembersManager
+            caMembers={caMembers}
+            currentUser={currentUser}
+            onSelectUser={handleSelectUser}
+            onAddMember={handleAddMember}
+            onUpdateMember={handleUpdateMember}
+            onDeleteMember={handleDeleteMember}
+          />
+        )}
+
         {activeTab === 'news' && (
           <NewsBoard
             newsList={newsList}
@@ -471,6 +509,8 @@ export default function App() {
         caMembers={caMembers}
         onSelectUser={handleSelectUser}
         onAddMember={handleAddMember}
+        onUpdateMember={handleUpdateMember}
+        onDeleteMember={handleDeleteMember}
       />
 
       {/* Footer */}
@@ -483,7 +523,7 @@ export default function App() {
             </span>
           </div>
           <span className="font-mono text-[11px] text-slate-500 dark:text-zinc-400">
-            Intranet du Conseil d'Administration • Zéro fuite de données • RLS Supabase
+            Intranet du Conseil d'Administration FFMC 06 • Accès sécurisé interne • Confidentialité des débats
           </span>
         </div>
       </footer>
