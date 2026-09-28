@@ -35,7 +35,7 @@ import {
 } from './types';
 import { Header } from './components/Header';
 import { TodayMorningBrief } from './components/TodayMorningBrief';
-import { Dashboard } from './Dashboard';
+import Dashboard from './Dashboard';
 import { GmailInbox } from './components/GmailInbox';
 import { NewsBoard } from './components/NewsBoard';
 import { MeetingsManager } from './components/MeetingsManager';
@@ -478,23 +478,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'dashboard' && userRole === 'coordinateur' && (
-          <Dashboard
-            tasks={tasks}
-            emails={emails}
-            newsList={newsList}
-            meetings={meetings}
-            onUpdateTaskStatus={handleUpdateTaskStatus}
-            onUpdateTask={handleUpdateTask}
-            onDeleteTask={handleDeleteTask}
-            onAddTask={handleAddTask}
-            onNavigateTab={setActiveTab}
-            onOpenEmail={(email) => {
-              setActiveEmailDetail(email);
-              setActiveTab('inbox');
-            }}
-          />
-        )}
+        {activeTab === 'dashboard' && userRole === 'coordinateur' && <Dashboard />}
 
         {activeTab === 'inbox' && userRole === 'coordinateur' && (
           <GmailInbox
