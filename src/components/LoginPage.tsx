@@ -129,18 +129,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
     setIsSubmitting(true);
 
     try {
-      // Step A: Antoine Fabre Coordinator Master Check
-      const isAntoine =
+      // Check 1: Antoine Fabre Membre CA
+      if (
+        cleanEmail === 'compteepicgamesantoine@gmail.com' &&
+        (cleanCode === '456789' || cleanCode.toLowerCase() === 'ffmc06')
+      ) {
+        const antoineMembre: CAMember = {
+          id: 'usr-antoine-membre',
+          name: 'Antoine Fabre',
+          email: 'compteepicgamesantoine@gmail.com',
+          role: 'membre',
+          title: 'Membre du Conseil d\'Administration FFMC 06',
+          avatarColor: 'bg-indigo-600 text-white',
+          phone: '06 12 34 56 78',
+          password: '456789',
+        };
+        setSuccessMessage(`Connexion réussie ! Bienvenue ${antoineMembre.name} (Membre CA).`);
+        setTimeout(() => onLoginSuccess(antoineMembre), 500);
+        return;
+      }
+
+      // Check 2: Antoine Fabre Coordinator Master Check
+      const isAntoineCoord =
         cleanEmail === 'antoinefabre1909@gmail.com' ||
-        cleanEmail === 'compteepicgamesantoine@gmail.com' ||
-        cleanEmail === 'coordinateur.ffmc06@gmail.com' ||
-        cleanEmail.includes('antoine');
+        cleanEmail === 'coordinateur.ffmc06@gmail.com';
 
       const isCoordMasterCode =
         ['123456', 'motard06', '06000', 'ffmc06', 'ffmc06-coord!2026', 'coord06'].includes(cleanCode.toLowerCase());
 
-      if (isAntoine && isCoordMasterCode) {
-        const antoineMember: CAMember = {
+      if (isAntoineCoord && isCoordMasterCode) {
+        const antoineCoord: CAMember = {
           id: 'usr-antoine',
           name: 'Antoine Fabre',
           email: 'antoinefabre1909@gmail.com',
@@ -150,8 +168,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
           phone: '06 12 34 56 78',
           password: '123456',
         };
-        setSuccessMessage(`Connexion réussie ! Bienvenue ${antoineMember.name} (Coordinateur).`);
-        setTimeout(() => onLoginSuccess(antoineMember), 500);
+        setSuccessMessage(`Connexion réussie ! Bienvenue ${antoineCoord.name} (Coordinateur).`);
+        setTimeout(() => onLoginSuccess(antoineCoord), 500);
         return;
       }
 
@@ -309,7 +327,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
                 <input
                   type="email"
                   required
-                  placeholder="antoinefabre1909@gmail.com..."
+                  placeholder="Votre adresse email..."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/80 text-white text-xs placeholder:text-slate-600 focus:ring-2 focus:ring-red-600 focus:border-red-600 focus:outline-none"
@@ -342,7 +360,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
                 <input
                   type={showCode ? 'text' : 'password'}
                   required
-                  placeholder={codeSent ? 'Entrez le code à 6 chiffres reçu' : 'Code ou mot de passe (ex: 123456)'}
+                  placeholder={codeSent ? 'Entrez le code à 6 chiffres reçu' : 'Code d\'accès ou mot de passe'}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-700 bg-slate-950/80 text-white text-xs placeholder:text-slate-600 focus:ring-2 focus:ring-red-600 focus:border-red-600 focus:outline-none font-mono"
@@ -354,14 +372,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ caMembers, onLoginSuccess 
                 >
                   {showCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-              </div>
-            </div>
-
-            {/* Helpful tip */}
-            <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 text-[11px] text-slate-300 flex items-start gap-2">
-              <span className="text-sm">💡</span>
-              <div className="leading-snug">
-                <strong>Accès direct Coordinateur :</strong> Email <span className="text-white font-mono font-semibold">antoinefabre1909@gmail.com</span> et mot de passe <span className="text-amber-300 font-mono font-bold">123456</span>.
               </div>
             </div>
 
