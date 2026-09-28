@@ -2,13 +2,34 @@ import React,{useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import type {Session} from '@supabase/supabase-js';
 import {ShieldCheck,Mail,LogOut} from 'lucide-react';
-import {configured,supabase} from './lib/backend';
+import {configured,supabase,SESSION_LOST_EVENT} from './lib/backend';
 import Dashboard from './Dashboard';
 import SharedMail from './SharedMail';
 import './styles.css';
 function App(){const [session,setSession]=useState<Session|null>(null),[checking,setChecking]=useState(configured),[member,setMember]=useState(false),[role,setRole]=useState('membre'),[preview,setPreview]=useState(false),[email,setEmail]=useState(''),[notice,setNotice]=useState(''),[sending,setSending]=useState(false),[fault,setFault]=useState('');
-useEffect(()=>{if(!supabase)return;const client=supabase;let alive=true;let revision=0;async function check(s:Session|null){const checkId=++revision;setSession(s);setMember(false);setRole('membre');setChecking(true);setFault('');if(s){const {data,error}=await client.from('ca_members').select('user_id,role').eq('user_id',s.user.id).maybeSingle();if(!alive||checkId!==revision)return;if(error)setFault('Impossible de vérifier votre accès. Réessayez dans un instant.');else {setMember(Boolean(data));setRole(data?.role||'membre');}}if(alive&&checkId===revision)setChecking(false);}
-client.auth.getSession().then(({data,error})=>{if(alive){if(error){setFault('La connexion a expiré. Reconnectez-vous.');setChecking(false);}else void check(data.session);}});const {data:{subscription}}=client.auth.onAuthStateChange((_event,s)=>{if(alive)void check(s);});return()=>{alive=false;subscription.unsubscribe();};},[]);
+useEffect(()=>{if(!supabase)return;const client=supabase;let alive=true;let revision=0;async function check(s:Session|null){const checkId=++revision;setSession(s);setMember(false);setRole('membre');setChecking(true);setFault('');if(s){try{const {data,error}=await client.from('ca_members').select('user_id,role').eq('user_id',s.user.id).maybeSingle();if(!alive||checkId!==revision)return;if(error)setFault('Impossible de vérifier votre accès. Réessayez dans un instant.');else {setMember(Boolean(data));setRole(data?.role||'membre');}}catch{if(alive&&checkId===revision)setFault('Impossible de vérifier votre accès. Réessayez.');}}if(alive&&checkId===revision)setChecking(false);}
+let authTimer:ReturnType<typeof setTimeout>|undefined;
+function lostSession(){
+ ++revision;setSession(null);setMember(false);setRole('membre');setChecking(false);
+ setFault('Votre session a expiré. Reconnectez-vous pour retrouver vos mails et les actualités.');
+}
+async function restore(){
+ try{const {data,error}=await client.auth.getSession();if(!alive)return;
+ if(error||!data.session){lostSession();return;}
+ await check(data.session);
+ }catch{if(alive){setChecking(false);setFault('Connexion indisponible. Réessayez.');}}
+}
+function resume(){if(document.visibilityState==='visible')void restore();}
+const {data:{subscription}}=client.auth.onAuthStateChange((_event,s)=>{
+ // Wait until the Auth callback releases its lock before querying PostgREST.
+ clearTimeout(authTimer);
+ authTimer=setTimeout(()=>{if(alive)void check(s);},0);
+});
+window.addEventListener(SESSION_LOST_EVENT,lostSession);
+window.addEventListener('pageshow',resume);
+document.addEventListener('visibilitychange',resume);
+return()=>{alive=false;++revision;clearTimeout(authTimer);subscription.unsubscribe();window.removeEventListener(SESSION_LOST_EVENT,lostSession);window.removeEventListener('pageshow',resume);document.removeEventListener('visibilitychange',resume);};},[]);
+
 async function requestLink(e:React.FormEvent){e.preventDefault();if(!supabase)return;setSending(true);setNotice('');try{const redirectTo=new URL(import.meta.env.BASE_URL,window.location.origin).href;const {error}=await supabase.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:false,emailRedirectTo:redirectTo}});if(error)setNotice('Le lien n’a pas pu être demandé. Vérifiez votre invitation auprès du coordinateur ou réessayez plus tard.');else setNotice('Si votre compte est autorisé, vous recevrez un lien de connexion par mail.');}catch{setNotice('Connexion indisponible. Réessayez plus tard.');}finally{setSending(false);}}
 async function logout(){const {error}=await supabase!.auth.signOut();if(error)setFault('Déconnexion impossible. Réessayez.');}
 if(session&&member&&!checking)return <><div className="account-bar"><span>{session.user.email} · {role==='coordinateur'?'Coordinateur':'Membre du CA'}</span>{role==='coordinateur'&&<button onClick={()=>setPreview(!preview)}>{preview?'Revenir à la vue coordinateur':'Voir la vue membre du CA'}</button>}<button onClick={logout}><LogOut size={14}/> Se déconnecter</button>{fault&&<span role="alert">{fault}</span>}</div>{role==='coordinateur'&&!preview?<Dashboard key={session.user.id}/>:<>{preview&&<div className="preview-banner">Aperçu de la vue membre : uniquement les mails publiés au CA.</div>}<SharedMail key={session.user.id+'-ca'}/></>}</>;

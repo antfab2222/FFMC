@@ -1,8 +1,10 @@
 import {createClient} from '@supabase/supabase-js';
+import {privateFetch} from './private-fetch';
+export const SESSION_LOST_EVENT='ffmc:session-lost';
 const url=import.meta.env.VITE_SUPABASE_URL?.trim();
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 export const configured=Boolean(url?.startsWith('https://')&&key&&!url.includes('YOUR_PROJECT')&&!key.includes('REPLACE_ME'));
-export const supabase=configured?createClient(url!,key!,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+export const supabase=configured?createClient(url!,key!,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch:privateFetch(url!,()=>window.dispatchEvent(new Event(SESSION_LOST_EVENT)))}}):null;
 export type RecordItem={id?:string;kind:string;title:string;status:string;owner:string;due:string;notes:string;next:string;updated?:string};
 export async function listRecords():Promise<RecordItem[]>{if(!supabase)throw Error('Connexion non configurée.');const {data,error}=await supabase.from('records').select('*').order('updated',{ascending:false});if(error)throw Error('Chargement impossible. Vérifiez votre accès ou réessayez.');return data.map(r=>({...r,due:r.due||''}));}
 export async function saveRecord(record:RecordItem){if(!supabase)throw Error('Connexion non configurée.');const {id,updated,kind,title,status,owner,due,notes,next}=record;const payload={kind,title:title.trim(),status,owner,due:due||null,notes,next};if(!payload.title)throw Error('Le titre est obligatoire.');if(id){if(!updated)throw Error('Rechargez le dossier avant de le modifier.');const {data,error}=await supabase.from('records').update(payload).eq('id',id).eq('updated',updated).select('id').maybeSingle();if(error)throw Error('Enregistrement impossible. Votre saisie est conservée.');if(!data)throw Error('Ce dossier a été modifié par un autre membre ou votre accès a changé. Copiez votre saisie, puis rechargez la page.');}else{const {error}=await supabase.from('records').insert(payload);if(error)throw Error('Enregistrement impossible. Votre saisie est conservée.');}}
