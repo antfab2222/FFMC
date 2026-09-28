@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path';
 import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 
@@ -349,8 +350,12 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // Serve static files in production if needed
+    // Serve static files in production
     app.use(express.static('dist'));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      res.sendFile(path.resolve('dist/index.html'));
+    });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
