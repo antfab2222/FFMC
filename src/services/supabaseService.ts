@@ -67,6 +67,31 @@ export async function signInWithSupabaseEmailPassword(email: string, password: s
   return await client.auth.signInWithPassword({ email, password });
 }
 
+export async function sendSupabaseOtpCode(email: string) {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error('Supabase n\'est pas encore configuré avec une clé API anon.');
+  }
+  return await client.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+    },
+  });
+}
+
+export async function verifySupabaseOtpCode(email: string, token: string) {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error('Supabase n\'est pas encore configuré avec une clé API anon.');
+  }
+  return await client.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  });
+}
+
 export async function signInWithSupabaseMagicLink(email: string) {
   const client = getSupabaseClient();
   if (!client) {

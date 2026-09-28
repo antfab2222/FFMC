@@ -78,14 +78,15 @@ export const CAMembersManager: React.FC<CAMembersManagerProps> = ({
   };
 
   const copyMemberAccessCard = (member: CAMember) => {
-    const cardText = `🏍️ FFMC 06 — Fiche d'accès Espace CA
+    const cardText = `🏍️ FFMC 06 — Identifiants d'accès Espace CA
 ---------------------------------------------
 Bénévole : ${member.name}
 Rôle : ${member.role === 'coordinateur' ? '👑 Coordinateur Général' : 'Membre du CA'} (${member.title})
 Email : ${member.email}
-${member.phone ? `Téléphone : ${member.phone}\n` : ''}Mot de passe : ${member.password || '(non configuré)'}
+${member.phone ? `Téléphone : ${member.phone}\n` : ''}Code d'accès / Mot de passe : ${member.password || '(non configuré)'}
 ---------------------------------------------
-Lien intranet : ${window.location.origin}${window.location.pathname}`;
+Lien intranet : ${window.location.origin}${window.location.pathname}
+Connectez-vous avec votre adresse email et votre code d'accès.`;
 
     navigator.clipboard.writeText(cardText);
     setCopiedCardId(member.id);

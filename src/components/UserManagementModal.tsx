@@ -114,10 +114,10 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
 Bénévole : ${member.name}
 Rôle : ${member.role === 'coordinateur' ? 'Coordinateur Général' : 'Membre du CA'} (${member.title})
 Email : ${member.email}
-${member.phone ? `Téléphone : ${member.phone}\n` : ''}Mot de passe d'accès : ${member.password || '(non défini)'}
+${member.phone ? `Téléphone : ${member.phone}\n` : ''}Code d'accès / Mot de passe : ${member.password || '(non défini)'}
 ---------------------------------------------
 Lien intranet : ${window.location.origin}${window.location.pathname}
-Ne partagez pas ces identifiants en dehors du CA.`;
+Connectez-vous avec votre adresse email et ce code d'accès.`;
 
     navigator.clipboard.writeText(cardText);
     setCopiedCardId(member.id);
