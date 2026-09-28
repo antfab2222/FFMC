@@ -3,7 +3,7 @@ import {ArrowUpRight,Globe2,RefreshCw,Newspaper} from 'lucide-react';
 import {supabase,type Publication,type RecordItem} from './lib/backend';
 
 type Source={label:string;url:string;date?:string};
-type Article={id:string;title:string;body:string;topic:string;progress:string;next_step:string;source_refs:Source[];published_at:string;news_scope:string;news_type:string;importance:string;impact:string;event_date:string|null;verified_at:string|null};
+type Article={kind?:string;id:string;title:string;body:string;topic:string;progress:string;next_step:string;source_refs:Source[];published_at:string;news_scope:string;news_type:string;importance:string;impact:string;event_date:string|null;verified_at:string|null};
 type Watch={last_checked_at:string|null;last_success_at:string|null;status:string;message:string};
 const scopes=['Tous','Europe','France','Région Sud','Alpes-Maritimes'];
 const types=['Tous','Décision officielle','Projet en débat','Position associative','Événement','Étude et chiffres','Information'];
@@ -17,7 +17,7 @@ export default function MotoNews({onPrepareShare,onPrepareRecord}:{onPrepareShar
  const version=useRef(0);
  useEffect(()=>{const timer=setTimeout(()=>{setQuery(search);setPage(0)},300);return()=>clearTimeout(timer)},[search]);
  async function load(quiet=false){const current=++version.current;if(!quiet)setBusy(true);try{
-  let q=supabase!.from('ca_news_items').select('id,title,body,topic,progress,next_step,source_refs,published_at,news_scope,news_type,importance,impact,event_date,verified_at').eq('kind','veille').order('published_at',{ascending:false}).order('id');
+  let q=supabase!.from('ca_news_items').select('id,title,body,topic,progress,next_step,source_refs,published_at,news_scope,news_type,importance,impact,event_date,verified_at').in('kind',['veille','initiative_ffmc']).order('published_at',{ascending:false}).order('id');
   if(scope!=='Tous')q=q.eq('news_scope',scope);if(type!=='Tous')q=q.eq('news_type',type);if(query)q=q.ilike('title',`%${query}%`);
   const [articles,state]=await Promise.all([q.range(page*12,page*12+12),supabase!.from('ca_news_watch').select('last_checked_at,last_success_at,status,message').eq('id','primary').maybeSingle()]);
   if(current!==version.current)return;if(articles.error||state.error)throw Error('Le fil n’a pas pu être actualisé. Les informations affichées peuvent dater.');
@@ -28,7 +28,7 @@ export default function MotoNews({onPrepareShare,onPrepareRecord}:{onPrepareShar
  const firstPage=page===0&&scope==='Tous'&&type==='Tous'&&!query;
  const lead=firstPage?(items.find(n=>n.importance==='À la une')||items[0]):undefined;
  const networkRx=/ffmc|antenne|motards en colère|manifestation|relais motards|calmos|jti|assises/i;
- const visible=view==='Actualités'?items:view==='Réseau FFMC'?items.filter(n=>networkRx.test(n.title+' '+n.body+' '+n.topic+' '+n.source_refs.map(s=>s.label).join(' '))):items.filter(n=>networkRx.test(n.title+' '+n.body+' '+n.topic)&&(/événement|position associative/i.test(n.news_type)||/action|opération|initiative|balade|relais|formation|manifestation/i.test(n.title+' '+n.body)));
+ const visible=view==='Actualités'?items.filter((n:any)=>n.kind!=='initiative_ffmc'):view==='Réseau FFMC'?items.filter(n=>networkRx.test(n.title+' '+n.body+' '+n.topic+' '+n.source_refs.map(s=>s.label).join(' '))):items.filter((n:any)=>n.kind==='initiative_ffmc'||(networkRx.test(n.title+' '+n.body+' '+n.topic)&&(/événement|position associative|idée à reprendre/i.test(n.news_type)||/action|opération|initiative|balade|relais|formation|manifestation/i.test(n.title+' '+n.body))));
  const shownLead=firstPage?(visible.find(n=>n.importance==='À la une')||visible[0]):undefined;
  const rest=shownLead?visible.filter(n=>n.id!==shownLead.id):visible;
  function article(n:Article,featured=false){return <article key={n.id} className={'moto-story '+(featured?'moto-featured':'')}>
