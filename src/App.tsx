@@ -46,6 +46,7 @@ import { ConnectionsModal } from './components/ConnectionsModal';
 import { LoginPage } from './components/LoginPage';
 import { fetchLiveNewsRSS } from './services/api';
 import { getSupabaseClient, signOutSupabase } from './services/supabaseService';
+import VotesBoard, { NotificationsPanel } from './VotesBoard';
 
 import { authenticatedMember, fetchEmails, mailAction, gmailStatus } from './services/backendService';
 
@@ -521,6 +522,10 @@ export default function App() {
             onViewTaskSource={(task) => setActiveModalTask(task)}
           />
         )}
+
+        {activeTab === 'votes' && <VotesBoard isCoordinator={userRole === 'coordinateur'} />}
+
+        {activeTab === 'notifications' && <NotificationsPanel onNavigate={setActiveTab} />}
 
         {activeTab === 'shares' && (
           <CASharesManager
