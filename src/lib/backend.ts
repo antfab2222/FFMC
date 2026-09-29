@@ -4,7 +4,7 @@ export const SESSION_LOST_EVENT='ffmc:session-lost';
 const url=import.meta.env.VITE_SUPABASE_URL?.trim();
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 export const configured=Boolean(url?.startsWith('https://')&&key&&!url.includes('YOUR_PROJECT')&&!key.includes('REPLACE_ME'));
-export const supabase=configured?createClient(url!,key!,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch:privateFetch(url!,()=>window.dispatchEvent(new Event(SESSION_LOST_EVENT)))}}):null;
+export const supabase=configured?createClient(url!,key!,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:typeof window!=='undefined'?window.localStorage:undefined,storageKey:'ffmc06-ca-auth'},global:{fetch:privateFetch(url!,()=>window.dispatchEvent(new Event(SESSION_LOST_EVENT)))}}):null;
 export type RecordItem={id?:string;kind:string;title:string;status:string;owner:string;due:string;notes:string;next:string;updated?:string};
 export async function listRecords():Promise<RecordItem[]>{if(!supabase)throw Error('Connexion non configurée.');const {data,error}=await supabase.from('records').select('*').order('updated',{ascending:false});if(error)throw Error('Chargement impossible. Vérifiez votre accès ou réessayez.');return data.map(r=>({...r,due:r.due||''}));}
 export async function deleteRecord(id:string){if(!supabase)throw Error('Connexion non configurée.');const {data,error}=await supabase.from('records').delete().eq('id',id).select('id').maybeSingle();if(error)throw Error('Suppression impossible : '+error.message);if(!data)throw Error('La réunion n’a pas été supprimée. Rechargez la page puis reconnectez-vous si nécessaire.');}
