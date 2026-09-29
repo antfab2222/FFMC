@@ -19,7 +19,7 @@ const nav=[['Vue d’ensemble',LayoutDashboard],['Dossiers & actions',FolderOpen
 const empty=(kind='Dossier'):RecordItem=>({kind,title:'',status:kind==='Mail'?'À trier':'À réfléchir',owner:'',due:'',notes:'',next:''});
 const format=(d:string)=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'Date à définir';
 const today=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
-const meetingNotes='1. Fonctionnement de l’antenne et disponibilités
+const meetingNotes=`1. Fonctionnement de l’antenne et disponibilités
 2. Référents par dossier et répartition de la charge
 3. Autonomie et décisions à soumettre au CA
 4. Évolution du CA et règles sur les objets FFMC
@@ -30,7 +30,7 @@ const meetingNotes='1. Fonctionnement de l’antenne et disponibilités
 9. Référents, prochaines étapes et échéances
 
 DÉCISIONS DU CA
-À compléter pendant la réunion.';
+À compléter pendant la réunion.`;
 const validViews=nav.map(([n])=>n);const viewFromUrl=()=>{const p=new URLSearchParams(location.search);const page=p.get('page');if(page&&validViews.includes(page as any))return page as typeof validViews[number];return p.has('news')?'News moto & politique':p.has('gmail')?'Courrier privé':'Vue d’ensemble'};
 export default function Dashboard(){const [view,setViewState]=useState(viewFromUrl),[rows,setRows]=useState<RecordItem[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[form,setForm]=useState<RecordItem|null>(null),[saving,setSaving]=useState(false),[publication,setPublication]=useState<Publication|null>(null),[sharesVersion,setSharesVersion]=useState(0),[filter,setFilter]=useState('Tous'),[month,setMonth]=useState(()=>new Date());
 function setView(next:typeof validViews[number]){setViewState(next);const u=new URL(location.href);u.searchParams.delete('news');u.searchParams.delete('gmail');if(next==='Vue d’ensemble')u.searchParams.delete('page');else u.searchParams.set('page',next);history.pushState({view:next},'',u);}
@@ -40,13 +40,7 @@ const dossiers=rows.filter(r=>r.kind==='Dossier'),active=dossiers.filter(r=>r.st
 function edit(kind='Dossier'){setForm(empty(kind));}
 async function removeMeeting(){if(!form?.id||form.kind!=='Réunion'||saving)return;if(!window.confirm('Supprimer définitivement cette réunion ?'))return;setSaving(true);try{await deleteRecord(form.id);setForm(null);toast.success('Réunion supprimée');await refresh();}catch(e){toast.error((e as Error).message);}finally{setSaving(false);}}
 async function save(e:FormEvent){e.preventDefault();setSaving(true);try{await saveRecord(form!);setForm(null);toast.success('Enregistré');await refresh();}catch(e){toast.error((e as Error).message);}finally{setSaving(false);}}
-function exportSummary(){const mails=rows.filter(r=>r.kind==='Mail'&&r.status==='À partager');const content='FFMC 06 — Synthèse à relire avant diffusion
-
-'+mails.map(r=>r.title+'
-'+r.notes+'
-Suite : '+r.next).join('
-
-');const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='FFMC06-synthese-CA.txt';a.click();URL.revokeObjectURL(url);}
+function exportSummary(){const mails=rows.filter(r=>r.kind==='Mail'&&r.status==='À partager');const content=['FFMC 06 — Synthèse à relire avant diffusion','',...mails.flatMap(r=>[r.title,r.notes,'Suite : '+r.next,''])].join(String.fromCharCode(10));const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='FFMC06-synthese-CA.txt';a.click();URL.revokeObjectURL(url);}
 const card=(r:RecordItem)=><button key={r.id} className="record" onClick={()=>setForm({...r})}><div className="record-top"><span className={'badge status-'+r.status.replaceAll(' ','-')}>{r.status}</span><ArrowUpRight size={17}/></div><h3>{r.title}</h3><p>{r.next||'Prochaine étape à préciser'}</p><div className="record-bottom"><span>{r.owner||'Référent à désigner'}</span><span className={r.due&&r.due<today()&&r.status!=='Terminé'?'overdue':''}>{format(r.due)}</span></div></button>;
 const list=(items:RecordItem[],kind:string)=>items.length?<div className="cards">{items.map(card)}</div>:<div className="empty"><FolderOpen size={30}/><h3>Aucun {kind==='Mail'?'mail':kind==='Réunion'?'compte rendu':'dossier'} pour le moment</h3><p>{kind==='Dossier'?'Commencez par le CT moto ou une prochaine action.':'Ajoutez les informations utiles pour le CA.'}</p><button className="secondary" onClick={()=>edit(kind)}>Ajouter {kind==='Réunion'?'une réunion':kind==='Mail'?'un mail':'un dossier'}</button></div>;
 return <SidebarProvider><Sidebar className="side" collapsible="offcanvas"><SidebarHeader><div className="brand"><span>06</span><div>FFMC<strong>ESPACE CA</strong></div></div></SidebarHeader><SidebarContent><p className="nav-label">FAIRE AVANCER L’ANTENNE</p><SidebarMenu>{nav.map(([n,Icon])=><SidebarMenuItem key={n}><SidebarMenuButton isActive={view===n} onClick={()=>{setView(n);setFilter('Tous')}}><Icon/><span>{n}</span></SidebarMenuButton></SidebarMenuItem>)}</SidebarMenu></SidebarContent><SidebarFooter><div className="sidebar-note"><ShieldCheck size={18}/><div>Espace privé<span>Conseil d’administration</span></div></div><div className="signature">Fédération française des<br/>motards en colère · Alpes-Maritimes</div></SidebarFooter></Sidebar><main className="workspace"><header className="topbar"><div><SidebarTrigger/><span>FFMC 06 <span className="slash">/</span> Vue coordinateur</span></div><span className="private"><ShieldCheck size={14}/> Privé</span></header><div className="page"><div className="page-title"><div><p className="eyebrow">LE COLLECTIF EN ACTION</p><h1>{view}</h1><p className="subtitle">{view==='News moto & politique'?'Les informations qui comptent pour les motards et leurs représentants.':view==='Vue d’ensemble'?'Les sujets à faire avancer, ensemble.':view==='Dossiers & actions'?'Une idée, un référent, une prochaine étape.':view==='Réunions'?'Préparer les échanges et garder une trace des décisions.':view==='Calendrier'?'Les dates des réunions et les échéances de vos dossiers.':'Trier les informations et préparer leur partage au CA.'}</p></div>{view!=='Partages au CA'&&view!=='Actualités'&&view!=='News moto & politique'&&<button className="primary" onClick={()=>edit(view==='Réunions'?'Réunion':view==='Courrier privé'?'Mail':'Dossier')}><Plus size={18}/>{view==='Réunions'?'Nouvelle réunion':view==='Courrier privé'?'Ajouter un mail':'Nouveau dossier'}</button>}</div>
