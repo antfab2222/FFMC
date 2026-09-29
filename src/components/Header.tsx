@@ -36,6 +36,7 @@ interface HeaderProps {
   pendingEmailsCount: number;
   unreadNewsCount: number;
   activeSharesCount: number;
+  unreadNotificationsCount?: number;
   userRole: UserRole;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
@@ -55,6 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   pendingEmailsCount,
   unreadNewsCount,
   activeSharesCount,
+  unreadNotificationsCount = 0,
   userRole,
   isDarkMode,
   onToggleDarkMode,
@@ -103,6 +105,8 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'notifications',
       label: 'Notifications',
       icon: BellRing,
+      badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
+      badgeColor: 'bg-red-600',
     },
     {
       id: 'shares',
