@@ -19,6 +19,8 @@ import {
   Database,
   Radio,
   Users,
+  Vote,
+  BellRing,
   LogOut,
 } from 'lucide-react';
 import { CronConfig, UserRole, CAMember } from '../types';
@@ -91,6 +93,16 @@ export const Header: React.FC<HeaderProps> = ({
       label: 'Réunions du CA',
       icon: Calendar,
       restrictedForMember: true,
+    },
+    {
+      id: 'votes',
+      label: 'Votes & Idées',
+      icon: Vote,
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      icon: BellRing,
     },
     {
       id: 'shares',
