@@ -74,6 +74,7 @@ export default function App() {
   const [activeEmailDetail, setActiveEmailDetail] = useState<EmailMessage | null>(null);
   const [isConnectionsOpen, setIsConnectionsOpen] = useState<boolean>(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -112,6 +113,19 @@ export default function App() {
     const timer=setInterval(refresh,60000);
     return ()=>{cancelled=true;clearInterval(timer);};
   }, [isAuthenticated,userRole]);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setUnreadNotificationsCount(0); return; }
+    const client = getSupabaseClient()!;
+    let alive = true;
+    const refreshNotifications = async () => {
+      const {count} = await client.from('ca_notifications').select('id',{count:'exact',head:true}).is('read_at',null);
+      if(alive)setUnreadNotificationsCount(count||0);
+    };
+    void refreshNotifications();
+    const timer=setInterval(refreshNotifications,30000);
+    return ()=>{alive=false;clearInterval(timer);};
+  }, [isAuthenticated, activeTab]);
 
   // Synchronize Dark Mode with HTML class
   useEffect(() => {
@@ -418,6 +432,7 @@ export default function App() {
         pendingEmailsCount={pendingEmailsCount}
         unreadNewsCount={unreadNewsCount}
         activeSharesCount={caShares.length}
+        unreadNotificationsCount={unreadNotificationsCount}
         userRole={userRole}
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
