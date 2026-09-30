@@ -1,6 +1,5 @@
-import {useEffect,useRef,useState} from 'react';
+import {lazy,Suspense,useEffect,useRef,useState} from 'react';
 import {CalendarDays,FileText,Map,Mic,MicOff,Radio,Users} from 'lucide-react';
-import {lazy,Suspense} from 'react';
 const LiveOperation=lazy(()=>import('./LiveOperation'));
 import {supabase} from './lib/backend';
 import {toast} from 'sonner';
