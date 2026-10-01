@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Shield,
   RefreshCw,
@@ -22,6 +22,9 @@ import {
   Vote,
   BellRing,
   LogOut,
+  Menu,
+  X,
+  MoreHorizontal,
 } from 'lucide-react';
 import { CronConfig, UserRole, CAMember } from '../types';
 import { ChevronDown, User } from 'lucide-react';
@@ -66,6 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   const isCoordinateur = userRole === 'coordinateur';
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Navigation items matching the intranet specification
   const navItems = [
@@ -137,11 +141,11 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 shadow-sm transition-colors duration-200">
+    <header className="app-header sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 shadow-sm transition-colors duration-200">
       {/* Top Banner with Identity, Role Switcher & System Status */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div className="app-header-main max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* Brand identity: FFMC 06 · Espace CA */}
-        <div className="flex items-center gap-3">
+        <div className="app-brand flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-700 text-white font-extrabold text-base shadow-sm shrink-0">
             <span>06</span>
           </div>
@@ -162,7 +166,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right side controls: Role preview, DB indicator, Sync & Dark Mode */}
-        <div className="flex items-center flex-wrap gap-2.5">
+        <div className="app-header-actions flex items-center flex-wrap gap-2.5">
           {/* Status indicators */}
           <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-50 dark:bg-zinc-800/80 border border-slate-200 dark:border-zinc-700 text-[11px] text-slate-600 dark:text-zinc-300">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
@@ -249,7 +253,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-zinc-800/80 overflow-x-auto scrollbar-none">
+      <div className="desktop-tabbar max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-zinc-800/80 overflow-x-auto scrollbar-none">
         <nav className="flex space-x-1 py-1.5" aria-label="Tabs">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -262,7 +266,7 @@ export const Header: React.FC<HeaderProps> = ({
                 disabled={isRestricted}
                 onClick={() => {
                   if (isRestricted) return;
-                  setActiveTab(item.id);
+                  setActiveTab(item.id); setMobileMenuOpen(false);
                 }}
                 title={isRestricted ? "Section réservée au Coordinateur Général" : item.label}
                 className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
@@ -298,6 +302,17 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
       </div>
+      <div className="mobile-nav-shell">
+        <nav className="mobile-bottom-nav" aria-label="Navigation mobile principale">
+          {navItems.filter(item => ['today','votes','notifications','news'].includes(item.id) && !( !isCoordinateur && item.restrictedForMember)).map(item => {
+            const Icon=item.icon; const active=activeTab===item.id;
+            return <button key={item.id} className={active?'active':''} onClick={()=>{setActiveTab(item.id);setMobileMenuOpen(false)}}><span className="mobile-nav-icon"><Icon size={20}/>{item.badge!==undefined&&<b>{item.badge}</b>}</span><small>{item.id==='today'?'Accueil':item.id==='notifications'?'Alertes':item.id==='news'?'Actualités':'Votes'}</small></button>
+          })}
+          <button className={mobileMenuOpen?'active':''} onClick={()=>setMobileMenuOpen(v=>!v)}><span className="mobile-nav-icon">{mobileMenuOpen?<X size={20}/>:<MoreHorizontal size={20}/>}</span><small>Plus</small></button>
+        </nav>
+        {mobileMenuOpen&&<div className="mobile-more-menu" role="dialog" aria-label="Toutes les rubriques"><div className="mobile-more-head"><strong>Rubriques</strong><button aria-label="Fermer" onClick={()=>setMobileMenuOpen(false)}><X size={20}/></button></div><div className="mobile-more-grid">{navItems.map(item=>{const Icon=item.icon;const restricted=!isCoordinateur&&item.restrictedForMember;return <button key={item.id} disabled={restricted} className={activeTab===item.id?'active':''} onClick={()=>{if(!restricted){setActiveTab(item.id);setMobileMenuOpen(false)}}}><Icon size={19}/><span>{item.label}</span>{item.badge!==undefined&&<b>{item.badge}</b>}{restricted&&<Lock size={12}/>}</button>})}</div></div>}
+      </div>
+
     </header>
   );
 };
