@@ -1,0 +1,13 @@
+import {Lock,Mail,FileText,ShieldCheck,Brain,Clock} from 'lucide-react';
+
+export default function SecurityPortal(){
+ const cards=[
+  {icon:Lock,title:'Accès authentifié',text:'Les espaces internes nécessitent une connexion. Les autorisations sont contrôlées côté base de données, pas seulement en masquant des boutons.'},
+  {icon:FileText,title:'Documents privés',text:'Les PDF sont stockés dans un espace privé. Les documents Trésorier sont réservés au coordinateur et aux comptes disposant de la permission Trésorerie.'},
+  {icon:Mail,title:'Boîte mail privée',text:'Les mails Gmail importés restent réservés au coordinateur. Ils ne sont jamais publiés automatiquement au CA. Une copie locale des mails privés est supprimée automatiquement après 365 jours ; le message original reste dans Gmail.'},
+  {icon:Brain,title:'Analyse IA encadrée',text:'L’analyse Gemini est désactivée tant que le projet n’est pas explicitement validé pour un niveau de service adapté aux données confidentielles. Lorsqu’elle est activée, seules des portions limitées du texte sont transmises et les pièces jointes ne sont pas lues.'},
+  {icon:Clock,title:'Minimisation',text:'L’analyse automatique est limitée au contenu utile : jusqu’à 6 000 caractères du mail et 800 caractères par message de contexte. Les clés privées restent côté serveur.'},
+  {icon:ShieldCheck,title:'Droits par fonction',text:'Les accès sensibles sont séparés par permissions : CA, secrétariat, administration, trésorerie et voltigeurs. Les fonctions serveur sensibles ne sont pas exécutables publiquement.'}
+ ];
+ return <section className="secretariat-portal"><div className="secretariat-head"><div><p className="eyebrow">CONFIDENTIALITÉ · FFMC 06</p><h1>Sécurité & confidentialité</h1><p className="subtitle">Comment les informations internes de l’antenne sont protégées et traitées.</p></div><ShieldCheck size={34}/></div><div className="security-notice"><strong>Principe :</strong> aucune sécurité informatique ne permet de promettre un risque zéro. Nous limitons donc les accès, les données conservées et les services externes utilisés.</div><div className="security-grid">{cards.map(({icon:Icon,title,text})=><article className="security-card" key={title}><Icon size={22}/><div><h3>{title}</h3><p>{text}</p></div></article>)}</div><div className="security-ai"><h2>À propos de l’intelligence artificielle</h2><p>L’IA sert uniquement d’assistance au tri et à la préparation. Elle ne décide pas au nom du CA, n’envoie pas de mail et ne publie pas automatiquement une information. Une validation humaine reste nécessaire.</p><p><strong>Pièces jointes :</strong> elles ne sont pas envoyées à l’analyse Gemini par le système actuel.</p></div></section>
+}
