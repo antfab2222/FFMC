@@ -29,7 +29,7 @@ export default function MotoNews({onPrepareShare,onPrepareRecord,readOnly=false}
  const lead=firstPage?(items.find(n=>n.importance==='À la une')||items[0]):undefined;
  const networkRx=/ffmc|antenne|motards en colère|manifestation|relais motards|calmos|jti|assises/i;
  const visible=view==='Actualités'?items.filter((n:any)=>n.kind!=='initiative_ffmc'):view==='Réseau FFMC'?items.filter(n=>networkRx.test(n.title+' '+n.body+' '+n.topic+' '+n.source_refs.map(s=>s.label).join(' '))):items.filter((n:any)=>n.kind==='initiative_ffmc'||(networkRx.test(n.title+' '+n.body+' '+n.topic)&&(/événement|position associative|idée à reprendre/i.test(n.news_type)||/action|opération|initiative|balade|relais|formation|manifestation/i.test(n.title+' '+n.body))));
- const shownLead=firstPage?visible[0]:undefined;
+ const shownLead=firstPage?(visible.find(n=>n.importance==='À la une')||visible[0]):undefined;
  const rest=shownLead?visible.filter(n=>n.id!==shownLead.id):visible;
  function article(n:Article,featured=false){return <article key={n.id} className={'moto-story '+(featured?'moto-featured':'')}>
   <div className="moto-tags"><span className="moto-scope">{n.news_scope}</span><span>{n.news_type}</span>{n.importance!=='À suivre'&&<strong>{n.importance}</strong>}</div>
