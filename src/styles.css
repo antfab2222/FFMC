@@ -192,3 +192,10 @@ button,a{touch-action:manipulation}
 .rmc-simple-category .rmc-simple-row:nth-of-type(odd){background:#ffffff}
 .rmc-simple-category .rmc-simple-row:nth-of-type(even){background:#eef2f4}
 .rmc-simple-category .rmc-simple-row:hover{background:#e2e8ec}
+
+.preview-modal-backdrop{position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.55);display:grid;place-items:center;padding:18px}
+.preview-modal{width:min(620px,100%);background:#fff;border-radius:18px;padding:24px;box-shadow:0 28px 90px rgba(0,0,0,.28)}
+.preview-modal h2{margin:0 0 6px}.preview-modal>p{margin:0 0 18px;color:#64748b}
+.preview-access-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.preview-access-grid label{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#fafafa}.preview-access-grid input{width:18px;height:18px}
+@media(max-width:600px){.preview-access-grid{grid-template-columns:1fr}.preview-modal{padding:18px}}
