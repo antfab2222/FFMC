@@ -24,7 +24,7 @@ export default function MotoNews({onPrepareShare,onPrepareRecord,readOnly=false}
   setItems(articles.data.slice(0,12));setMore(articles.data.length>12);setWatch(state.data);setError('');setNow(Date.now());
  }catch(e){if(current===version.current)setError((e as Error).message);}finally{if(current===version.current)setBusy(false);}}
  useEffect(()=>{void load();const timer=setInterval(()=>{setNow(Date.now());if(document.visibilityState==='visible')void load(true)},60000);const focus=()=>{if(document.visibilityState==='visible')void load(true)};document.addEventListener('visibilitychange',focus);return()=>{version.current++;clearInterval(timer);document.removeEventListener('visibilitychange',focus)}},[scope,type,query,page]);
- const stale=!watch?.last_success_at||now-new Date(watch.last_success_at).getTime()>3*3600000;
+ const stale=!watch?.last_success_at||now-new Date(watch.last_success_at).getTime()>7*3600000;
  const firstPage=page===0&&scope==='Tous'&&type==='Tous'&&!query;
  const lead=firstPage?(items.find(n=>n.importance==='À la une')||items[0]):undefined;
  const networkRx=/ffmc|antenne|motards en colère|manifestation|relais motards|calmos|jti|assises/i;
