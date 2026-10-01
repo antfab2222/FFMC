@@ -146,3 +146,6 @@ button,a{touch-action:manipulation}
 .document-browser{margin-top:18px}.document-browser-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.document-browser .document-breadcrumb{margin:0}.document-browser .document-folders:empty{display:none}@media(max-width:600px){.document-browser-top{align-items:flex-start;flex-direction:column}}
 
 .document-browser-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}@media(max-width:600px){.document-browser-actions{width:100%}.document-browser-actions button{flex:1}}
+
+/* Security & privacy */
+.security-notice{padding:15px 17px;border:1px solid #d7e2d8;border-radius:14px;background:#f7faf7;margin:14px 0 18px;line-height:1.55}.security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.security-card{display:flex;gap:13px;padding:17px;border:1px solid #e2e7e2;border-radius:15px;background:#fff}.security-card>svg{flex:0 0 auto;margin-top:2px}.security-card h3{margin:0 0 6px}.security-card p,.security-ai p{margin:0;color:#5d665f;line-height:1.55}.security-ai{margin-top:16px;padding:18px;border:1px solid #e2e7e2;border-radius:15px;background:#fff}.security-ai h2{margin:0 0 10px;font-size:18px}.security-ai p+p{margin-top:9px}@media(max-width:720px){.security-grid{grid-template-columns:1fr}}
