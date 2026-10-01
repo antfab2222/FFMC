@@ -4,8 +4,9 @@ import {supabase} from './lib/backend';
 import {toast} from 'sonner';
 type Doc={id:string;title:string;description:string;category:string;url?:string;storage_path?:string;folder_id?:string|null;created_by:string;created_by_name?:string;created_at:string};
 type FolderItem={id:string;name:string;parent_id:string|null;category:string;created_by_name?:string};
-const cats=['Tous','Administration','Réunions','Actions','Communication','Voltigeurs','Modèles','Trésorier','Autre'];
-export default function DocumentsPortal({canWrite=false}:{canWrite?:boolean}){
+const allCats=['Tous','Administration','Réunions','Actions','Communication','Voltigeurs','Modèles','Trésorier','Autre'];
+export default function DocumentsPortal({canWrite=false,canSeeTreasury=false}:{canWrite?:boolean;canSeeTreasury?:boolean}){
+ const cats=canSeeTreasury?allCats:allCats.filter(x=>x!=='Trésorier');
  const [items,setItems]=useState<Doc[]>([]),[cat,setCat]=useState('Tous'),[open,setOpen]=useState(false),[title,setTitle]=useState(''),[description,setDescription]=useState(''),[category,setCategory]=useState('Administration'),[url,setUrl]=useState(''),[file,setFile]=useState<File|null>(null),[saving,setSaving]=useState(false),[folders,setFolders]=useState<FolderItem[]>([]),[folderId,setFolderId]=useState<string|null>(null),[newFolder,setNewFolder]=useState(''),[folderOpen,setFolderOpen]=useState(false);
  async function load(){if(!supabase)return;const [{data,error},{data:fs,error:fe}]=await Promise.all([supabase.from('ca_documents').select('*').order('created_at',{ascending:false}),supabase.from('ca_document_folders').select('*').order('name')]);if(error||fe)toast.error('Impossible de charger les documents.');else{setItems((data||[]) as Doc[]);setFolders((fs||[]) as FolderItem[])}}
  useEffect(()=>{void load()},[]);
