@@ -149,3 +149,5 @@ button,a{touch-action:manipulation}
 
 /* Security & privacy */
 .security-notice{padding:15px 17px;border:1px solid #d7e2d8;border-radius:14px;background:#f7faf7;margin:14px 0 18px;line-height:1.55}.security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.security-card{display:flex;gap:13px;padding:17px;border:1px solid #e2e7e2;border-radius:15px;background:#fff}.security-card>svg{flex:0 0 auto;margin-top:2px}.security-card h3{margin:0 0 6px}.security-card p,.security-ai p{margin:0;color:#5d665f;line-height:1.55}.security-ai{margin-top:16px;padding:18px;border:1px solid #e2e7e2;border-radius:15px;background:#fff}.security-ai h2{margin:0 0 10px;font-size:18px}.security-ai p+p{margin-top:9px}@media(max-width:720px){.security-grid{grid-template-columns:1fr}}
+
+.record-link{display:inline-flex;margin:-2px 0 7px;font-size:12px;font-weight:700;color:#66736a;background:#f3f6f3;border-radius:999px;padding:4px 8px}
