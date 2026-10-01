@@ -205,3 +205,10 @@ button,a{touch-action:manipulation}
 .status-À-décider{background:#fff0d6!important;color:#9a5b00!important}
 .status-En-cours{background:#e4efff!important;color:#245ea8!important}
 .status-Terminé{background:#e3f4e8!important;color:#267044!important}
+
+/* Fond pastel des dossiers selon leur statut */
+.record.record-status-À-réfléchir{background:#f6f7f8;border-color:#e3e7ea}
+.record.record-status-À-décider{background:#fff9ed;border-color:#f2dfb8}
+.record.record-status-En-cours{background:#f2f7ff;border-color:#d6e5f8}
+.record.record-status-Terminé{background:#f1f9f3;border-color:#d4ead9}
+.record.record-status-À-réfléchir:hover,.record.record-status-À-décider:hover,.record.record-status-En-cours:hover,.record.record-status-Terminé:hover{filter:brightness(.985)}
