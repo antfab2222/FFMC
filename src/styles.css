@@ -214,3 +214,140 @@ button,a{touch-action:manipulation}
 .record.record-status-À-réfléchir:hover,.record.record-status-À-décider:hover,.record.record-status-En-cours:hover,.record.record-status-Terminé:hover{filter:brightness(.985)}
 
 .meeting-live{margin-bottom:22px}.meeting-launch,.meeting-session{background:#fff;border:1px solid #dfe5df;border-radius:16px;padding:20px}.meeting-launch{display:flex;justify-content:space-between;gap:20px;align-items:center}.meeting-launch h2,.meeting-session h2{margin:3px 0}.meeting-launch-actions{display:flex;gap:10px;flex-wrap:wrap}.meeting-launch select{min-width:280px;padding:10px 12px;border:1px solid #d8dfd8;border-radius:10px;background:#fff}.meeting-minutes{width:100%;margin-top:14px;padding:16px;border:1px solid #d8dfd8;border-radius:12px;background:#fbfcfa;font:inherit;line-height:1.55;resize:vertical}.meeting-session .form-actions{margin-top:12px}@media(max-width:700px){.meeting-launch{align-items:stretch;flex-direction:column}.meeting-launch-actions{flex-direction:column}.meeting-launch select{min-width:0;width:100%}.meeting-minutes{min-height:55vh}}
+
+
+/* ===== Mobile responsive hardening — FFMC 06 ===== */
+html,body,#root{max-width:100%;overflow-x:hidden}
+img,video,canvas,svg{max-width:100%}
+button,input,textarea,select{max-width:100%}
+.workspace,.page,.overview,.cards,.record,.agenda,.gmail-inbox,.publication,.moto-story,.ca-portal,.ca-content,.ca-head,.member-grid,.member-card{min-width:0}
+.record h3,.record p,.publication-body,.member-card h3,.member-card p,.moto-story h2,.gmail-inbox,.ca-title,.ca-welcome{overflow-wrap:anywhere}
+
+@media(max-width:900px){
+  .page{padding:28px 20px}
+  .topbar{height:60px;padding:0 18px}
+  .overview{grid-template-columns:1fr}
+  .agenda{width:100%}
+  .moto-grid{grid-template-columns:1fr}
+  .news-toolbar{align-items:stretch}
+  .news-toolbar label{flex:1 1 220px}
+  .news-toolbar input,.news-toolbar select{width:100%}
+  .ca-head{padding:22px 20px 10px}
+  .ca-content{padding:26px 20px 60px}
+  .ca-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .member-grid{grid-template-columns:1fr}
+  .ca-welcome{align-items:flex-start}
+}
+
+@media(max-width:700px){
+  body{font-size:15px}
+  h1{font-size:clamp(27px,8vw,32px);letter-spacing:-.8px}
+  h2{font-size:19px}
+  .page{padding:20px 14px}
+  .topbar{padding:0 10px;height:56px}
+  .topbar>div{min-width:0}
+  .topbar>div>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slash,.private{display:none}
+
+  .page-title{align-items:stretch;flex-direction:column;gap:16px;margin-bottom:24px}
+  .page-title>.primary,.page-title>.secondary{width:100%}
+  .subtitle{font-size:14px}
+
+  .metrics,.ca-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .metric,.ca-metrics button{padding:15px}
+  .metric strong,.ca-metrics strong{font-size:28px}
+  .metric span,.ca-metrics span{font-size:12px}
+  .metric svg{display:none}
+
+  .cards,.member-grid{grid-template-columns:1fr}
+  .record,.member-card,.publication,.moto-story,.moto-featured{padding:18px}
+  .record-bottom{flex-wrap:wrap}
+
+  .section-head,.ca-row{align-items:stretch;flex-direction:column;gap:12px}
+  .section-head>.secondary,.section-head>.primary,.ca-row>.primary,.ca-row>.secondary{width:100%}
+  .section-head .filters{width:100%}
+
+  .filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-left:-2px;margin-right:-2px;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .filters button{flex:0 0 auto}
+
+  .notice,.moto-watch{align-items:stretch;flex-direction:column}
+  .notice button,.moto-watch button{width:100%}
+  .meeting-prompt{padding:20px}
+  .meeting-prompt h2{font-size:24px}
+
+  .form-row{grid-template-columns:1fr}
+  .form-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  .form-actions>*{width:100%}
+  .editor{min-width:calc(100vw - 20px);max-width:calc(100vw - 20px);max-height:94svh}
+  .editor input,.editor textarea,.editor [data-slot=select-trigger]{font-size:16px}
+
+  .calendar{padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .calendar .section-head{position:sticky;left:0;z-index:2;background:white;padding-bottom:4px}
+  .calendar-controls{display:grid;grid-template-columns:auto 1fr auto;width:100%;gap:6px}
+  .calendar-controls button{min-height:40px}
+  .calendar-grid{min-width:680px}
+  .day{min-height:90px;padding:5px}
+  .dayname{padding:8px 5px}
+  .day button{font-size:11px;padding:4px}
+  .below{margin-top:24px}
+
+  .account-bar{min-height:auto;padding:8px 10px;justify-content:space-between;align-items:flex-start;gap:8px}
+  .account-identity{min-width:0;flex:1;flex-wrap:wrap}
+  .account-identity>span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .account-actions{flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end}
+  .account-bar button{min-height:36px}
+
+  .login-page{padding:12px}
+  .login-card{padding:24px 18px;border-radius:12px}
+  .login-card .brand{padding-bottom:24px}
+  .brand img{width:54px;height:54px}
+  .brand b{font-size:19px}
+
+  .member-page{padding:22px 14px}
+  .member-brand{margin-bottom:26px}
+  .publication-meta{font-size:12px}
+  .sharing-actions{display:grid;grid-template-columns:1fr}
+  .sharing-actions>*{width:100%}
+
+  .gmail-topic{align-items:stretch;flex-direction:column}
+  .gmail-topic select{width:100%}
+  .gmail-auto{align-items:flex-start}
+
+  .news-toolbar{display:grid;grid-template-columns:1fr;gap:10px}
+  .news-toolbar>*{width:100%}
+  .news-toolbar button{width:100%}
+
+  .moto-masthead{padding:20px;align-items:flex-start}
+  .moto-globe{display:none}
+  .moto-story,.moto-featured{padding:18px}
+  .moto-featured h2{font-size:22px}
+
+  .ca-head{padding:16px 14px 8px;align-items:stretch;flex-direction:column;gap:12px}
+  .ca-head>.secondary{width:100%}
+  .ca-head .member-brand{margin:0}
+  .ca-tabs{top:0;margin:8px 10px 0;border-radius:10px;padding:5px;overflow-x:auto;scrollbar-width:none}
+  .ca-tabs::-webkit-scrollbar{display:none}
+  .ca-tabs button{padding:9px 11px;font-size:13px}
+  .ca-content{padding:22px 14px 48px}
+  .ca-welcome{padding:22px;align-items:flex-start}
+  .ca-welcome h1{font-size:28px}
+  .ca-welcome>svg{display:none}
+  .ca-metrics{margin:14px 0 24px}
+  .member-card p{max-height:none}
+  .ca-agenda{padding:4px 14px}
+  .ca-agenda article{gap:8px;flex-direction:column;padding:15px 0}
+  .ca-agenda time{min-width:0}
+  .ca-modal{padding:10px;align-items:end}
+  .ca-modal form{width:100%;max-height:92svh;overflow:auto;border-radius:14px 14px 0 0}
+
+  footer{padding:18px 14px;flex-wrap:wrap}
+}
+
+@media(max-width:420px){
+  .metrics,.ca-metrics{grid-template-columns:1fr}
+  .page{padding-left:12px;padding-right:12px}
+  .ca-content{padding-left:12px;padding-right:12px}
+  .calendar-grid{min-width:630px}
+  .primary,.secondary{white-space:normal;line-height:1.25}
+}
