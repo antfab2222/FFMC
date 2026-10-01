@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from 'react';
-import {Bell,CalendarDays,FileText,Home,Lightbulb,Newspaper,Plus,RefreshCw,Users,Vote,BellRing,FolderOpen,Euro} from 'lucide-react';
+import {Bell,CalendarDays,FileText,Home,Lightbulb,Newspaper,Plus,RefreshCw,Users,Vote,BellRing,FolderOpen,Euro,ShieldCheck} from 'lucide-react';
 import {supabase} from './lib/backend';
 import SharedMail from './SharedMail';
 import MotoNews from './MotoNews';
@@ -9,6 +9,7 @@ import VoltigeursPortal from './VoltigeursPortal';
 import SecretariatPortal from './SecretariatPortal';
 import DocumentsPortal from './DocumentsPortal';
 import TreasuryPortal from './TreasuryPortal';
+import SecurityPortal from './SecurityPortal';
 
 type Pub={id:string;title:string;body:string;published:boolean;category?:string;event_date?:string;created_at?:string};
 type Source={label:string;url:string;date?:string};
@@ -20,7 +21,7 @@ type Meeting={id:string;title:string;status:string;owner:string;due?:string;note
 const baseTabs=[['Accueil',Home],['Actualités',Newspaper],['Partages du coordinateur',FileText],['Réunions',Users],['Agenda',CalendarDays],['Idées',Lightbulb],['Votes',Vote],['Notifications',BellRing]] as const;
 export default function MemberPortal({preview=false,permissions=[],role='membre'}:{preview?:boolean;permissions?:string[];role?:string}){
  const has=(p:string)=>permissions.includes(p)||role==='coordinateur';
- const tabs=[...baseTabs.filter(([t])=>t==='Accueil'||(['Actualités'].includes(t)&&has('actualites'))||(['Votes','Notifications'].includes(t)&&has('votes'))||(['Partages du coordinateur','Réunions','Agenda','Idées'].includes(t)&&has('ca'))),...(has('secretariat')?[['Secrétariat',FileText] as const]:[]),...((has('ca')||has('secretariat')||has('administration'))?[['Documents',FolderOpen] as const]:[]),...(has('tresorerie')?[['Trésorerie',Euro] as const]:[]),...(has('voltigeurs')?[['Voltigeurs',Users] as const]:[])];
+ const tabs=[...baseTabs.filter(([t])=>t==='Accueil'||(['Actualités'].includes(t)&&has('actualites'))||(['Votes','Notifications'].includes(t)&&has('votes'))||(['Partages du coordinateur','Réunions','Agenda','Idées'].includes(t)&&has('ca'))),...(has('secretariat')?[['Secrétariat',FileText] as const]:[]),...((has('ca')||has('secretariat')||has('administration'))?[['Documents',FolderOpen] as const]:[]),...(has('tresorerie')?[['Trésorerie',Euro] as const]:[]),...(has('voltigeurs')?[['Voltigeurs',Users] as const]:[]),['Sécurité',ShieldCheck] as const];
  const [calendarMonth,setCalendarMonth]=useState(()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)}),[view,setView]=useState('Accueil'),[pubs,setPubs]=useState<Pub[]>([]),[news,setNews]=useState<News[]>([]),[ideas,setIdeas]=useState<Idea[]>([]),[caMeetings,setCaMeetings]=useState<Meeting[]>([]),[caRecords,setCaRecords]=useState<Meeting[]>([]),[loading,setLoading]=useState(true),[ideaOpen,setIdeaOpen]=useState(false),[postOpen,setPostOpen]=useState(false),[title,setTitle]=useState(''),[body,setBody]=useState('');
  async function refresh(){if(!supabase)return;setLoading(true);const [p,n,i,r]=await Promise.all([supabase.from('ca_publications').select('id,title,body,published,category,event_date,created_at').eq('published',true).order('created_at',{ascending:false}),supabase.from('ca_news_items').select('id,title,body,topic,news_type,published_at,event_date,kind,source_refs').order('published_at',{ascending:false}).limit(500),supabase.from('ca_ideas').select('id,title,body,status,created_at').order('created_at',{ascending:false}),supabase.from('records').select('id,title,status,owner,due,notes,next,kind').in('kind',['Réunion','Action']).order('due',{ascending:true})]);setPubs((p.data||[]) as Pub[]);setNews((n.data||[]) as News[]);setIdeas((i.data||[]) as Idea[]);const records=(r.data||[]) as Meeting[];setCaRecords(records);setCaMeetings(records.filter(x=>x.kind==='Réunion'));setLoading(false);}
  useEffect(()=>{void refresh();const client=supabase;if(!client)return;const channel=client.channel('member-portal-live').on('postgres_changes',{event:'*',schema:'public',table:'ca_news_items'},()=>void refresh()).on('postgres_changes',{event:'*',schema:'public',table:'ca_publications'},()=>void refresh()).on('postgres_changes',{event:'*',schema:'public',table:'ca_ideas'},()=>void refresh()).on('postgres_changes',{event:'*',schema:'public',table:'records'},()=>void refresh()).subscribe();return()=>{void client.removeChannel(channel);};},[]);
@@ -41,6 +42,7 @@ export default function MemberPortal({preview=false,permissions=[],role='membre'
  {view==='Votes'&&<VotesBoard/>}\n {view==='Notifications'&&<NotificationsPanel onNavigate={(tab)=>setView(tab==='votes'?'Votes':'Notifications')}/>}\n {view==='Secrétariat'&&has('secretariat')&&<SecretariatPortal/>}
  {view==='Documents'&&(has('ca')||has('secretariat')||has('administration'))&&<DocumentsPortal canWrite={has('secretariat')||has('administration')} canSeeTreasury={has('tresorerie')}/>} 
  {view==='Trésorerie'&&has('tresorerie')&&<TreasuryPortal/>}
+ {view==='Sécurité'&&<SecurityPortal/>}
  {view==='Voltigeurs'&&has('voltigeurs')&&<VoltigeursPortal role={role}/>}
 
  </>}</main>{(ideaOpen||postOpen)&&<div className="ca-modal" onMouseDown={()=>{setIdeaOpen(false);setPostOpen(false)}}><form onMouseDown={e=>e.stopPropagation()} onSubmit={ideaOpen?submitIdea:submitPost}><h2>{ideaOpen?'Nouvelle idée':'Proposer une publication'}</h2><p>{postOpen?'Elle sera relue par le coordinateur avant d’être visible par le CA.':'Décrivez simplement votre proposition.'}</p><label>Titre<input required maxLength={200} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Description<textarea required rows={7} maxLength={10000} value={body} onChange={e=>setBody(e.target.value)}/></label><div className="form-actions"><button type="button" className="secondary" onClick={()=>{setIdeaOpen(false);setPostOpen(false)}}>Annuler</button><button className="primary">Envoyer</button></div></form></div>}<Toaster richColors position="bottom-right"/></div>;
