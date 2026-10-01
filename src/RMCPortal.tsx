@@ -1,0 +1,31 @@
+import {useEffect,useMemo,useState} from 'react';
+import {CheckCircle2,MapPin,Plus,Trash2} from 'lucide-react';
+import {supabase} from './lib/backend';
+import {toast} from 'sonner';
+
+type RMC={id:string;name:string;location:string;event_date:string|null;profile:string;notes:string};
+type Item={id:string;rmc_id:string;category:string;label:string;required:boolean;ready:boolean;sort_order:number};
+const profiles=['À définir','Relais Calmos full (ex. Escragnolles)','Relais Calmos avec aide mairie (ex. Guillaumes)','Salon moto avec aide mairie (ex. Grasse)'];
+const template=[
+['Base stand','Frigo'],['Base stand','Sono + câbles sono'],['Base stand','Caisse à outil'],['Base stand','Compresseur'],['Base stand','Groupe électrogène'],
+['Affichage','Banderolles FFMC'],['Affichage','Flammes FFMC'],['Affichage','Banderolles Calmos'],['Affichage','Flammes Calmos'],['Affichage','Panneaux rigides Calmos'],['Affichage','Panneau déroulable'],['Affichage','Chasubles'],['Affichage','Drapeaux FFMC'],
+['Logistique','Caisse FFMC'],['Logistique','Rallonge électrique enroulable'],['Logistique','Multiprise'],['Logistique','Boissons (Coca, Ice Tea, etc.)'],['Logistique','Cafetières'],['Logistique','Fournitures café (dosettes, sucre, etc.)'],['Logistique','Thé'],['Logistique',"Bouteilles d'eau"],['Logistique','Sandows, cordes, pinces, rislan'],['Logistique','Trousse avec ciseaux/cutter'],['Logistique','Caisses T-shirts (x2)'],
+['Goodies','Tours de cou'],['Goodies','Verres FFMC'],['Goodies','Motocollants'],['Goodies','Cochon tirelire & boîte à dons'],
+['Papiers',"Bulletins adhésion"],['Papiers','Magazines & prospectus'],['Papiers','Feuille suivi de ventes'],['Papiers','Feuille de présence']
+] as const;
+export default function RMCPortal(){
+ const [rmcs,setRmcs]=useState<RMC[]>([]),[items,setItems]=useState<Item[]>([]),[selected,setSelected]=useState(''),[busy,setBusy]=useState(false),[draft,setDraft]=useState({name:'',location:'',event_date:'',profile:profiles[0]});
+ async function load(){if(!supabase)return;const [{data:r},{data:i}]=await Promise.all([supabase.from('ca_rmc').select('*').order('event_date',{ascending:false}),supabase.from('ca_rmc_items').select('*').order('sort_order')]);setRmcs((r||[]) as RMC[]);setItems((i||[]) as Item[]);if(!selected&&r?.[0])setSelected(r[0].id)}
+ useEffect(()=>{void load()},[]);
+ async function create(e:React.FormEvent){e.preventDefault();if(!supabase)return;setBusy(true);const {data,error}=await supabase.from('ca_rmc').insert({...draft,event_date:draft.event_date||null}).select().single();if(error){setBusy(false);return toast.error(error.message)}const rows=template.map(([category,label],n)=>({rmc_id:data.id,category,label,sort_order:n,required:true,ready:false}));const ins=await supabase.from('ca_rmc_items').insert(rows);setBusy(false);if(ins.error)return toast.error(ins.error.message);setDraft({name:'',location:'',event_date:'',profile:profiles[0]});setSelected(data.id);toast.success('RMC créé avec sa checklist.');await load()}
+ async function toggle(i:Item){if(!supabase)return;setItems(v=>v.map(x=>x.id===i.id?{...x,ready:!x.ready}:x));const {error}=await supabase.from('ca_rmc_items').update({ready:!i.ready}).eq('id',i.id);if(error){toast.error(error.message);await load()}}
+ async function addItem(){if(!supabase||!selected)return;const label=prompt('Matériel / élément à ajouter');if(!label?.trim())return;const category=prompt('Catégorie','Logistique')||'Autre';const {error}=await supabase.from('ca_rmc_items').insert({rmc_id:selected,label:label.trim(),category,sort_order:items.filter(i=>i.rmc_id===selected).length+100});if(error)return toast.error(error.message);await load()}
+ async function removeRmc(r:RMC){if(!confirm('Supprimer le RMC « '+r.name+' » et sa checklist ?'))return;const {error}=await supabase!.from('ca_rmc').delete().eq('id',r.id);if(error)return toast.error(error.message);setSelected('');await load()}
+ const current=rmcs.find(r=>r.id===selected),currentItems=items.filter(i=>i.rmc_id===selected),categories=useMemo(()=>[...new Set(currentItems.map(i=>i.category))],[currentItems]);
+ const done=currentItems.filter(i=>i.ready).length;
+ return <section><div className="section-head"><div><p className="eyebrow">RELAIS MOTARD CALMOS</p><h2>Préparation des RMC</h2><p className="muted">Une checklist indépendante pour chaque lieu et chaque opération.</p></div></div>
+ <form className="member-invite" onSubmit={create}><div className="invite-main"><label>Nom du RMC<input required value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})} placeholder="Ex. RMC Guillaumes"/></label><label>Lieu<input required value={draft.location} onChange={e=>setDraft({...draft,location:e.target.value})} placeholder="Guillaumes"/></label></div><div className="invite-options"><label>Date<input type="date" value={draft.event_date} onChange={e=>setDraft({...draft,event_date:e.target.value})}/></label><label>Profil<select value={draft.profile} onChange={e=>setDraft({...draft,profile:e.target.value})}>{profiles.map(p=><option key={p}>{p}</option>)}</select></label><button className="primary" disabled={busy}><Plus size={16}/>Créer le RMC</button></div></form>
+ <div className="filters">{rmcs.map(r=><button key={r.id} className={selected===r.id?'chosen':''} onClick={()=>setSelected(r.id)}>{r.name}</button>)}</div>
+ {current?<><div className="section-head"><div><h2>{current.name}</h2><p className="muted"><MapPin size={14} className="inline"/> {current.location}{current.event_date?' · '+new Date(current.event_date+'T12:00:00').toLocaleDateString('fr-FR'):''} · {current.profile}</p></div><div className="sharing-actions"><strong>{done}/{currentItems.length} prêts</strong><button className="secondary" onClick={addItem}>+ Ajouter un élément</button><button className="secondary" onClick={()=>removeRmc(current)}><Trash2 size={14}/> Supprimer le RMC</button></div></div>{categories.map(cat=><section key={cat} className="publication"><h3>{cat}</h3><div className="rmc-checklist">{currentItems.filter(i=>i.category===cat).map(i=><label key={i.id} className={'rmc-check '+(i.ready?'ready':'')}><input type="checkbox" checked={i.ready} onChange={()=>toggle(i)}/><span>{i.label}</span>{i.ready&&<CheckCircle2 size={17}/>}</label>)}</div></section>)}</>:<p className="muted">Crée ton premier RMC pour générer sa checklist.</p>}
+ </section>
+}
