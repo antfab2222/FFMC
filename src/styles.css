@@ -199,3 +199,9 @@ button,a{touch-action:manipulation}
 .preview-access-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .preview-access-grid label{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#fafafa}.preview-access-grid input{width:18px;height:18px}
 @media(max-width:600px){.preview-access-grid{grid-template-columns:1fr}.preview-modal{padding:18px}}
+
+/* Statuts dossiers : repérage visuel */
+.status-À-réfléchir{background:#eef1f4!important;color:#59636e!important}
+.status-À-décider{background:#fff0d6!important;color:#9a5b00!important}
+.status-En-cours{background:#e4efff!important;color:#245ea8!important}
+.status-Terminé{background:#e3f4e8!important;color:#267044!important}
