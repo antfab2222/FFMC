@@ -19,7 +19,7 @@ import DocumentsPortal from './DocumentsPortal';
 import TreasuryPortal from './TreasuryPortal';
 import SecurityPortal from './SecurityPortal';
 import RMCPortal from './RMCPortal';
-const nav=[['Vue d’ensemble',LayoutDashboard],['Dossiers & actions',FolderOpen],['Réunions',Users],['Calendrier',CalendarDays],['Courrier privé',Mail],['News moto & politique',Newspaper],['Actualités',ClipboardList],['Partages au CA',Users],['Votes & idées',Vote],['Notifications',BellRing],['Membres du CA',ShieldCheck],['Documents',ClipboardList],['Trésorerie',FolderOpen],['RMC · Relais Motard Calmos',ClipboardList],['Sécurité & confidentialité',ShieldCheck],['Voltigeurs',Users]] as const;
+const nav=[['Vue d’ensemble',LayoutDashboard],['Dossiers & actions',FolderOpen],['Réunions',Users],['Calendrier',CalendarDays],['Courrier privé',Mail],['News moto & politique',Newspaper],['Actualités',ClipboardList],['Partages au CA',Users],['Votes & idées',Vote],['Notifications',BellRing],['Membres du CA',ShieldCheck],['Documents',ClipboardList],['Trésorerie',FolderOpen],['RMC · Relais Motard Calmos',ClipboardList],['Voltigeurs',Users],['Sécurité & confidentialité',ShieldCheck]] as const;
 const empty=(kind='Dossier'):RecordItem=>({kind,title:'',status:kind==='Mail'?'À trier':'À réfléchir',owner:'',due:'',notes:'',next:''});
 const format=(d:string)=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'Date à définir';
 const today=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Paris'});
