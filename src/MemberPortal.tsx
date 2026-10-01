@@ -43,7 +43,7 @@ export default function MemberPortal({preview=false,permissions=[],role='membre'
  {view==='Votes'&&<VotesBoard/>}\n {view==='Notifications'&&<NotificationsPanel onNavigate={(tab)=>setView(tab==='votes'?'Votes':'Notifications')}/>}\n {view==='Secrétariat'&&has('secretariat')&&<SecretariatPortal/>}
  {view==='Documents'&&(has('ca')||has('secretariat')||has('administration'))&&<DocumentsPortal canWrite={has('secretariat')||has('administration')} canSeeTreasury={has('tresorerie')}/>} 
  {view==='Trésorerie'&&has('tresorerie')&&<TreasuryPortal/>}
- {view==='RMC'&&<RMCPortal canEdit={role==='gestionnaire_rmc'||role==='coordinateur'}/>}
+ {view==='RMC'&&<RMCPortal canEdit={has('rmc')||role==='coordinateur'}/>}
  {view==='Sécurité'&&<SecurityPortal/>}
  {view==='Voltigeurs'&&has('voltigeurs')&&<VoltigeursPortal role={role}/>}
 
