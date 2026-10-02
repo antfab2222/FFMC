@@ -425,3 +425,5 @@ button,input,textarea,select{max-width:100%}
  .meeting-agenda-live li>button{min-height:52px}
  .agenda-postit{position:relative;left:auto;top:auto;width:calc(100% - 12px);margin:-3px 6px 8px;transform:none;border-radius:0 0 12px 12px}
 }
+
+.agenda-editor-help{display:block;margin-top:7px;padding:10px 12px;border-radius:9px;background:#f6f3df;color:#665b2d;font-size:12px;line-height:1.5;font-weight:400}.agenda-editor-help code{padding:2px 5px;border-radius:5px;background:#fff9d9;font-weight:800}
