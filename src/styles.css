@@ -442,3 +442,5 @@ button,input,textarea,select{max-width:100%}
 .meeting-private-panel h3{margin:2px 0 4px}
 .meeting-private-panel textarea{width:100%;margin-top:14px;padding:15px;border:1px solid #e4d38d;border-radius:11px;background:#fffef8;font:inherit;line-height:1.6;resize:vertical}
 @media(max-width:700px){.meeting-work-tabs{display:grid;grid-template-columns:1fr 1fr}.meeting-work-tabs button{padding:8px 6px;font-size:12px}.meeting-private-panel{padding:14px}.meeting-private-panel textarea{min-height:45vh}}
+
+.private-save-state{display:block;margin-top:7px;text-align:right;color:#66806d;font-size:11px;font-weight:700}
