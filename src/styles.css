@@ -444,3 +444,8 @@ button,input,textarea,select{max-width:100%}
 @media(max-width:700px){.meeting-work-tabs{display:grid;grid-template-columns:1fr 1fr}.meeting-work-tabs button{padding:8px 6px;font-size:12px}.meeting-private-panel{padding:14px}.meeting-private-panel textarea{min-height:45vh}}
 
 .private-save-state{display:block;margin-top:7px;text-align:right;color:#66806d;font-size:11px;font-weight:700}
+
+
+/* Private coordinator-only calendar events */
+.calendar-grid .day button.calendar-event-private{background:#e7f1ff!important;border-color:#9fc5f8!important;color:#174f91!important}
+.calendar-grid .day button.calendar-event-private:hover{background:#d9eaff!important;border-color:#73a9ec!important}
