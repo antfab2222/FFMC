@@ -2,6 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import {Play,RotateCcw,Square,XCircle,LockKeyhole,FileDown} from 'lucide-react';
 import {supabase} from './lib/backend';
 import {toast} from 'sonner';
+import {jsPDF} from 'jspdf';
 type Meeting={id:string;title:string;status:string;due?:string;notes:string;private_notes?:string;next:string};
 type Session={id:string;meeting_id:string;status:string;started_at:string;ended_at?:string;minutes:string;ai_summary?:string};
 type Member={user_id:string;display_name:string};
@@ -23,23 +24,30 @@ export default function MeetingLive({meetings,canManage,onChanged}:{meetings:Mee
  async function reopen(s:Session){if(!supabase||live)return toast.error('Une réunion est déjà en cours.');if(!confirm('Réouvrir cette réunion ?'))return;const {error}=await supabase.from('ca_meeting_sessions').update({status:'live',ended_at:null}).eq('id',s.id);if(!error)await supabase.from('records').update({status:'En cours'}).eq('id',s.meeting_id);if(error)return toast.error(error.message);setEditingClosed(null);toast.success('Réunion réouverte.');await load();onChanged()}
  async function cancel(s:Session){if(!supabase||!confirm('Annuler cette réunion ? Elle restera conservée comme réunion annulée.'))return;const {error}=await supabase.from('ca_meeting_sessions').update({status:'cancelled',ended_at:new Date().toISOString()}).eq('id',s.id);if(!error)await supabase.from('records').update({status:'Annulé',next:'Réunion annulée'}).eq('id',s.meeting_id);if(error)return toast.error(error.message);toast.success('Réunion annulée.');await load();onChanged()}
 
- function escapeHtml(value:string){return value.replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]||ch))}
+ function safeFileName(value:string){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'-').replace(/^-+|-+$/g,'')}
  function meetingDate(m?:Meeting){return m?.due?new Date(m.due+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}):'date à compléter'}
- function agendaHtml(text:string){return text.replace(/\\\\n/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean).map(line=>'<li>'+escapeHtml(line.replace(/^[-•]\s*/,''))+'</li>').join('')}
- function exportPdf(kind:'agenda'|'minutes',m?:Meeting,s?:Session){
+ async function logoPng(){const match=FFMC_LOGO.match(/href="(data:image\/webp;base64,[^"]+)"/);if(!match)return null;return await new Promise<string|null>(resolve=>{const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;canvas.getContext('2d')?.drawImage(img,0,0);resolve(canvas.toDataURL('image/png'))};img.onerror=()=>resolve(null);img.src=match[1]})}
+ async function exportPdf(kind:'agenda'|'minutes',m?:Meeting,s?:Session){
   if(!m)return toast.error('Réunion introuvable.');
-  const isMinutes=kind==='minutes',date=meetingDate(m);
-  const source=isMinutes?(s?.minutes||''):(m.notes||'');
-  const checked=isMinutes?[...source.matchAll(/^☑\s+(.+)$/gm)].map(x=>x[1].trim()):[];
-  const unchecked=isMinutes?[...source.matchAll(/^☐\s+(.+)$/gm)].map(x=>x[1].trim()):[];
-  let body='';
+  const doc=new jsPDF({unit:'mm',format:'a4'}),isMinutes=kind==='minutes',date=meetingDate(m),source=isMinutes?(s?.minutes||''):(m.notes||'');
+  const margin=18,pageW=210,pageH=297,contentW=174;let y=18;
+  const logo=await logoPng();if(logo)doc.addImage(logo,'PNG',margin,y,25,25);
+  doc.setTextColor(20,20,20);doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text('Fédération Française des Motards en Colère des Alpes-Maritimes',112,y+5,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('FFMC 06 – 11 rue de Rivoli – 06000 Nice · Tél. : 06.98.32.34.55',112,y+11,{align:'center'});doc.text('info@ffmc06.fr · www.ffmc06.fr/dotclear',112,y+15,{align:'center'});doc.text('Association régie par la loi de 1901, déclarée en préfecture des Alpes-Maritimes',112,y+20,{align:'center'});doc.text('sous le n° W062003812',112,y+24,{align:'center'});
+  y=48;doc.setDrawColor(120);doc.line(margin,y,pageW-margin,y);y+=10;doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text((isMinutes?'Compte rendu — ':'Ordre du jour — ')+m.title,pageW/2,y,{align:'center',maxWidth:contentW});y+=7;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(date,pageW/2,y,{align:'center'});y+=11;
+  const newPage=()=>{doc.addPage();y=20};
+  const write=(text:string,bold=false,size=10,indent=0)=>{doc.setTextColor(20,20,20);doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);const lines=doc.splitTextToSize(text,contentW-indent);for(const line of lines){if(y>pageH-24)newPage();doc.text(line,margin+indent,y);y+=5.2}y+=1};
   if(isMinutes){
-   const marker='NOTES, DÉCISIONS ET ACTIONS',idx=source.indexOf(marker);
-   const detail=idx>=0?source.slice(idx+marker.length).replace(/FIN DE RÉUNION\s*:[^\n]*/g,'').trim():source;
-   body='<div class="attendance"><p><b>Présents : </b>'+escapeHtml(checked.join(', ')||'À compléter')+'</p><p><b>Absents : </b>'+escapeHtml(unchecked.join(', ')||'À compléter')+'</p></div><h2>Compte rendu</h2><div class="minutes">'+escapeHtml(detail||'À compléter').replace(/\n/g,'<br>')+'</div>';
-  }else body='<h2>Ordre du jour</h2><ul>'+agendaHtml(source)+'</ul>';
-  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml((isMinutes?'Compte rendu - ':'Ordre du jour - ')+m.title)+'</title><style>@page{size:A4;margin:30mm 18mm 24mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11pt;line-height:1.42;margin:0}.head{border-bottom:1px solid #777;padding-bottom:9px;margin-bottom:22px}.brandline{display:flex;align-items:center;gap:14px}.logo{width:68px;height:68px;flex:0 0 68px}.logo svg{display:block;width:68px;height:68px}.headtext{flex:1;text-align:center;padding-right:82px}.head strong{display:block;font-size:11pt}.head span{display:block;font-size:8.5pt;margin-top:2px}.title{text-align:center;font-weight:700;font-size:14pt;margin:0 0 3px}.date{text-align:center;font-size:10pt;margin-bottom:20px}h2{font-size:12pt;margin:18px 0 8px}ul{padding-left:21px}li{margin:0 0 8px}.attendance p{margin:4px 0}.minutes{white-space:normal}.signatures{display:flex;justify-content:space-between;margin-top:40px;page-break-inside:avoid}.signatures div{width:44%}.footer{position:fixed;bottom:-16mm;left:0;right:0;text-align:center;font-size:8pt;color:#555}@media print{button{display:none}}</style></head><body><header class="head"><div class="brandline"><div class="logo">${FFMC_LOGO}</div><div class="headtext"><strong>Fédération Française des Motards en Colère des Alpes-Maritimes</strong><span>FFMC 06 – 11 rue de Rivoli – 06000 Nice · Tél. : 06.98.32.34.55 · info@ffmc06.fr · www.ffmc06.fr/dotclear</span><span>Association régie par la loi de 1901, déclarée en préfecture des Alpes-Maritimes sous le n° W062003812</span></div></div></header><p class="title">'+escapeHtml(isMinutes?'Compte rendu — '+m.title:'Ordre du jour — '+m.title)+'</p><p class="date">'+escapeHtml(date)+'</p>'+body+(isMinutes?'<div class="signatures"><div>Le coordinateur :<br><b>Antoine Fabre</b></div><div>Le secrétaire :<br>________________________</div></div>':'')+'<div class="footer">FFMC 06 · '+escapeHtml(isMinutes?'Compte rendu':'Ordre du jour')+'</div><script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>';
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');if(!w){URL.revokeObjectURL(url);return toast.error('Autorisez les fenêtres pop-up pour exporter le PDF.')}window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+   const checked=[...source.matchAll(/^☑\s+(.+)$/gm)].map(x=>x[1].trim()),unchecked=[...source.matchAll(/^☐\s+(.+)$/gm)].map(x=>x[1].trim());
+   write('Présents : '+(checked.join(', ')||'À compléter'),true,9.5);write('Absents : '+(unchecked.join(', ')||'À compléter'),true,9.5);y+=2;write('Compte rendu',true,11);
+   const marker='NOTES, DÉCISIONS ET ACTIONS',idx=source.indexOf(marker);const detail=(idx>=0?source.slice(idx+marker.length):source).replace(/FIN DE RÉUNION\s*:[^\n]*/g,'').trim();
+   for(const line of detail.split('\n')){const t=line.trim();if(!t){y+=2;continue}const heading=/^[A-ZÀ-ÖØ-Ý0-9 ,’'\-–—]+$/.test(t)&&t.length<100;write(t,heading,heading?10.5:9.5)}
+   if(y>pageH-42)newPage();y+=14;doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text('Le coordinateur :',margin,y);doc.text('Le secrétaire :',125,y);y+=6;doc.setFont('helvetica','bold');doc.text('Antoine Fabre',margin,y);doc.setFont('helvetica','normal');doc.text('________________________',125,y);
+  }else{
+   write('Ordre du jour',true,11);const items=source.replace(/\\\\n/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean);for(const raw of items){write('• '+raw.replace(/^[-•]\s*/,''),false,10,3)}
+  }
+  const pages=doc.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(100);doc.text('FFMC 06 · '+(isMinutes?'Compte rendu':'Ordre du jour'),margin,288);doc.text(String(i)+' / '+String(pages),pageW-margin,288,{align:'right'})}
+  doc.save('FFMC06_'+(isMinutes?'Compte-rendu':'Ordre-du-jour')+'_'+safeFileName(m.title)+(m.due?'_'+m.due:'')+'.pdf');toast.success('PDF généré.');
  }
 
   const closed=sessions.filter(s=>s.status==='closed'),cancelled=sessions.filter(s=>s.status==='cancelled');
