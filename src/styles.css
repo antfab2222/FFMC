@@ -427,3 +427,18 @@ button,input,textarea,select{max-width:100%}
 }
 
 .agenda-editor-help{display:block;margin-top:7px;padding:10px 12px;border-radius:9px;background:#f6f3df;color:#665b2d;font-size:12px;line-height:1.5;font-weight:400}.agenda-editor-help code{padding:2px 5px;border-radius:5px;background:#fff9d9;font-weight:800}
+
+
+/* Dedicated private meeting notes */
+.private-notes-field{padding:13px;border:1px solid #eadc9d;border-radius:12px;background:#fffdf3}
+.private-notes-field>span{display:block;margin-bottom:7px;font-weight:800;color:#65541e}
+.private-notes-field small{font-weight:500;color:#8a7a49}
+.private-notes-field textarea{background:#fffef9}
+.meeting-work-tabs{display:flex;gap:6px;margin:20px 0 0;padding:5px;border:1px solid #dde4dd;border-radius:12px;background:#f4f7f4}
+.meeting-work-tabs button{min-height:42px;padding:8px 14px;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:9px;background:transparent;color:#647168;font-weight:800}
+.meeting-work-tabs button.active{background:#fff;color:#263c30;box-shadow:0 2px 8px rgba(20,45,30,.08)}
+.meeting-work-tabs button.private.active{background:#fff9dc;color:#6b5510}
+.meeting-private-panel{padding:18px;border:1px solid #eadc9d;border-radius:14px;background:#fffdf3}
+.meeting-private-panel h3{margin:2px 0 4px}
+.meeting-private-panel textarea{width:100%;margin-top:14px;padding:15px;border:1px solid #e4d38d;border-radius:11px;background:#fffef8;font:inherit;line-height:1.6;resize:vertical}
+@media(max-width:700px){.meeting-work-tabs{display:grid;grid-template-columns:1fr 1fr}.meeting-work-tabs button{padding:8px 6px;font-size:12px}.meeting-private-panel{padding:14px}.meeting-private-panel textarea{min-height:45vh}}
