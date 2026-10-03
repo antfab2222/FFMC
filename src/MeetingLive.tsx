@@ -29,30 +29,40 @@ export default function MeetingLive({meetings,canManage,onChanged}:{meetings:Mee
   if(!m)return toast.error('Réunion introuvable.');
   if(pdfBusy)return;setPdfBusy(true);toast.info('Génération du PDF…');
   try{
-  const doc=new jsPDF({unit:'mm',format:'a4'}),isMinutes=kind==='minutes',date=meetingDate(m),source=isMinutes?(s?.minutes||''):(m.notes||'');
-  const margin=18,pageW=210,pageH=297,contentW=174;let y=18;
-  let logo:string|null=null;try{logo=await Promise.race([logoPng(),new Promise<null>(resolve=>window.setTimeout(()=>resolve(null),1500))])}catch{logo=null}if(logo){try{doc.addImage(logo,'PNG',margin,y,25,25)}catch{}}
-  doc.setTextColor(20,20,20);doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text('Fédération Française des Motards en Colère des Alpes-Maritimes',112,y+5,{align:'center'});
-  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('FFMC 06 – 11 rue de Rivoli – 06000 Nice · Tél. : 06.98.32.34.55',112,y+11,{align:'center'});doc.text('info@ffmc06.fr · www.ffmc06.fr/dotclear',112,y+15,{align:'center'});doc.text('Association régie par la loi de 1901, déclarée en préfecture des Alpes-Maritimes',112,y+20,{align:'center'});doc.text('sous le n° W062003812',112,y+24,{align:'center'});
-  y=48;doc.setDrawColor(120);doc.line(margin,y,pageW-margin,y);y+=10;doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text((isMinutes?'Compte rendu — ':'Ordre du jour — ')+m.title,pageW/2,y,{align:'center',maxWidth:contentW});y+=7;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(date,pageW/2,y,{align:'center'});y+=11;
-  const newPage=()=>{doc.addPage();y=20};
-  const write=(text:string,bold=false,size=10,indent=0)=>{doc.setTextColor(20,20,20);doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);const lines=doc.splitTextToSize(text,contentW-indent);for(const line of lines){if(y>pageH-24)newPage();doc.text(line,margin+indent,y);y+=5.2}y+=1};
-  if(isMinutes){
-   const checked=[...source.matchAll(/^☑\s+(.+)$/gm)].map(x=>x[1].trim()),unchecked=[...source.matchAll(/^☐\s+(.+)$/gm)].map(x=>x[1].trim());
-   write('Présents : '+(checked.join(', ')||'À compléter'),true,9.5);write('Absents : '+(unchecked.join(', ')||'À compléter'),true,9.5);y+=2;write('Compte rendu',true,11);
-   const marker='NOTES, DÉCISIONS ET ACTIONS',idx=source.indexOf(marker);const detail=(idx>=0?source.slice(idx+marker.length):source).replace(/FIN DE RÉUNION\s*:[^\n]*/g,'').trim();
-   for(const line of detail.split('\n')){const t=line.trim();if(!t){y+=2;continue}const heading=/^[A-ZÀ-ÖØ-Ý0-9 ,’'\-–—]+$/.test(t)&&t.length<100;write(t,heading,heading?10.5:9.5)}
-   if(y>pageH-42)newPage();y+=14;doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text('Le coordinateur :',margin,y);doc.text('Le secrétaire :',125,y);y+=6;doc.setFont('helvetica','bold');doc.text('Antoine Fabre',margin,y);doc.setFont('helvetica','normal');doc.text('________________________',125,y);
-  }else{
-   write('Ordre du jour',true,11);const items=source.replace(/\\\\n/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean);for(const raw of items){write('• '+raw.replace(/^[-•]\s*/,''),false,10,3)}
-  }
-  const pages=doc.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(100);doc.text('FFMC 06 · '+(isMinutes?'Compte rendu':'Ordre du jour'),margin,288);doc.text(String(i)+' / '+String(pages),pageW-margin,288,{align:'right'})}
-  const filename='FFMC06_'+(isMinutes?'Compte-rendu':'Ordre-du-jour')+'_'+safeFileName(m.title)+(m.due?'_'+m.due:'')+'.pdf';
-  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||window.matchMedia('(max-width: 700px)').matches;
-  if(mobile){
-   const blob=doc.output('blob'),url=URL.createObjectURL(blob);setMobilePdf(prev=>{if(prev?.url)URL.revokeObjectURL(prev.url);return{url,name:filename}});toast.success('PDF prêt : touche « Ouvrir le PDF ».');
-  }else{doc.save(filename);toast.success('PDF téléchargé.');}
-  }catch(error){console.error('PDF generation failed',error);toast.error('Impossible de générer le PDF. Réessaie après avoir rechargé la page.');}
+   const doc=new jsPDF({unit:'mm',format:'a4'}),isMinutes=kind==='minutes',source=isMinutes?(s?.minutes||''):(m.notes||'');
+   const pageW=210,pageH=297,left=19,right=19,contentW=pageW-left-right,footerTop=263;let y=31;
+   let logo:string|null=null;try{logo=await Promise.race([logoPng(),new Promise<null>(resolve=>window.setTimeout(()=>resolve(null),1500))])}catch{logo=null}
+   const drawHeader=()=>{if(logo){try{doc.addImage(logo,'PNG',83,2.5,44,17)}catch{}}doc.setDrawColor(45,160,64);doc.setLineWidth(.25);doc.line(left,22.5,pageW-right,22.5)};
+   const drawFooter=()=>{doc.setDrawColor(20);doc.setLineWidth(.25);doc.line(left,263,pageW-right,263);doc.setTextColor(20);doc.setFont('helvetica','normal');doc.setFontSize(7.3);doc.text('FFMC 06 – 11 rue de Rivoli – 06000 Nice',pageW/2,270,{align:'center'});doc.setTextColor(0,65,210);doc.text('Tél.: 06.98.32.34.55 – info@ffmc06.fr – www.ffmc06.fr/dotclear',pageW/2,274,{align:'center'});doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(5.8);doc.text('Mouvement FFMC :',left,279);doc.setFont('helvetica','normal');doc.setFontSize(5.4);doc.text('FFMC   ·   Moto Magazine   ·   Mutuelle des Motards   ·   AFDM   ·   FFMC Loisirs   ·   Stop Vol   ·   Juridique   ·   ERJ   ·   FEMA',left+25,279);doc.setFontSize(6.2);doc.text('Association régie par la loi de 1901, déclarée en préfecture des Alpes-Maritimes sous le n° W062003812',pageW/2,289,{align:'center'})};
+   const newPage=()=>{drawFooter();doc.addPage();drawHeader();y=31};
+   const ensure=(h=6)=>{if(y+h>footerTop-4)newPage()};
+   const write=(text:string,bold=false,size=10,indent=0,after=1.2,underline=false)=>{doc.setTextColor(15);doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);const lines=doc.splitTextToSize(text,contentW-indent);for(const line of lines){ensure(5.3);doc.text(line,left+indent,y);if(underline){const w=doc.getTextWidth(line);doc.setLineWidth(.18);doc.line(left+indent,y+.7,left+indent+w,y+.7)}y+=5.05}y+=after};
+   drawHeader();
+   const dateLabel=m.due?new Date(m.due+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'date à compléter';
+   const title=(isMinutes?'Réunion ':'Ordre du jour — ')+(m.title||'FFMC 06')+(m.due?' – '+dateLabel:'');
+   doc.setFont('helvetica','bold');doc.setFontSize(11.2);doc.setTextColor(10);const titleLines=doc.splitTextToSize(title,contentW);for(const line of titleLines){doc.text(line,pageW/2,y,{align:'center'});const w=doc.getTextWidth(line);doc.setLineWidth(.2);doc.line((pageW-w)/2,y+.8,(pageW+w)/2,y+.8);y+=5.5}y+=7;
+   if(isMinutes){
+    const checked=[...source.matchAll(/^☑\s+(.+)$/gm)].map(x=>x[1].trim()),unchecked=[...source.matchAll(/^☐\s+(.+)$/gm)].map(x=>x[1].trim());
+    write('Présents : ('+checked.length+') '+(checked.join(', ')||'À compléter'),true,10);
+    write('Absents : ('+unchecked.length+') '+(unchecked.join(', ')||'À compléter'),true,10,0,4);
+    const startTime=s?.started_at?new Date(s.started_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+    if(startTime)write('La réunion débute à '+startTime,true,10,0,6,true);
+    write('Sujets de discussion:',true,10.5,0,4);
+    const marker='NOTES, DÉCISIONS ET ACTIONS',idx=source.indexOf(marker);let detail=(idx>=0?source.slice(idx+marker.length):source).replace(/FIN DE RÉUNION\s*:[^\n]*/g,'').trim();
+    for(const raw of detail.split('\n')){const t=raw.trim();if(!t){y+=1.5;continue}const bullet=/^[-•]\s*/.test(t),clean=t.replace(/^[-•]\s*/,'');const heading=/^[A-ZÀ-ÖØ-Ý0-9 ,’'\-–—:]+$/.test(clean)&&clean.length<90;if(bullet)write('•   '+clean,true,10,6,2);else write(clean,heading,10,0,heading?1.5:.5,heading)}
+    ensure(24);y+=7;doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text('Le coordinateur :',left,y);doc.text('Le secrétaire :',126,y);y+=5;doc.setFont('helvetica','bold');doc.text('Antoine Fabre',left,y);doc.setFont('helvetica','normal');doc.text('________________________',126,y);
+   }else{
+    write('Sujets de discussion:',true,10.5,0,4);
+    const rawItems=source.replace(/\\n/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean);
+    const stop=rawItems.findIndex(x=>/^DÉCISIONS DU CA$/i.test(x));
+    const items=(stop>=0?rawItems.slice(0,stop):rawItems).filter(x=>!/^ORDRE DU JOUR PROPOSÉ$/i.test(x)).filter(x=>!/^À compléter pendant la réunion\.?$/i.test(x)).filter(x=>!/^ACTIONS À L['’]ISSUE DU CA$/i.test(x)).map(x=>x.split('||')[0].trim());
+    for(const raw of items){const clean=raw.replace(/^[-•]\s*/,'');write('•   '+clean,true,10,6,2)}
+   }
+   drawFooter();
+   const filename='FFMC06_'+(isMinutes?'Compte-rendu':'Ordre-du-jour')+'_'+safeFileName(m.title)+(m.due?'_'+m.due:'')+'.pdf';
+   const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||window.matchMedia('(max-width: 700px)').matches;
+   if(mobile){const blob=doc.output('blob'),url=URL.createObjectURL(blob);setMobilePdf(prev=>{if(prev?.url)URL.revokeObjectURL(prev.url);return{url,name:filename}});toast.success('PDF prêt : touche « Ouvrir le PDF ».')}else{doc.save(filename);toast.success('PDF téléchargé.')}
+  }catch(error){console.error('PDF generation failed',error);toast.error('Impossible de générer le PDF. Réessaie après avoir rechargé la page.')}
   finally{setPdfBusy(false)}
  }
 
