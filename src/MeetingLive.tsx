@@ -45,7 +45,13 @@ export default function MeetingLive({meetings,canManage,onChanged}:{meetings:Mee
    write('Ordre du jour',true,11);const items=source.replace(/\\\\n/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean);for(const raw of items){write('• '+raw.replace(/^[-•]\s*/,''),false,10,3)}
   }
   const pages=doc.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(100);doc.text('FFMC 06 · '+(isMinutes?'Compte rendu':'Ordre du jour'),margin,288);doc.text(String(i)+' / '+String(pages),pageW-margin,288,{align:'right'})}
-  doc.save('FFMC06_'+(isMinutes?'Compte-rendu':'Ordre-du-jour')+'_'+safeFileName(m.title)+(m.due?'_'+m.due:'')+'.pdf');toast.success('PDF généré.');
+  const filename='FFMC06_'+(isMinutes?'Compte-rendu':'Ordre-du-jour')+'_'+safeFileName(m.title)+(m.due?'_'+m.due:'')+'.pdf';
+  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||window.matchMedia('(max-width: 700px)').matches;
+  if(mobile){
+   const blob=doc.output('blob'),url=URL.createObjectURL(blob);const opened=window.open(url,'_blank');
+   if(!opened){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}
+   window.setTimeout(()=>URL.revokeObjectURL(url),120000);toast.success('PDF ouvert — utilise Partager pour l’enregistrer dans Fichiers.');
+  }else{doc.save(filename);toast.success('PDF téléchargé.');}
  }
 
   const closed=sessions.filter(s=>s.status==='closed'),cancelled=sessions.filter(s=>s.status==='cancelled');
