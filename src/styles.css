@@ -449,3 +449,11 @@ button,input,textarea,select{max-width:100%}
 /* Private coordinator-only calendar events */
 .calendar-grid .day button.calendar-event-private{background:#e7f1ff!important;border-color:#9fc5f8!important;color:#174f91!important}
 .calendar-grid .day button.calendar-event-private:hover{background:#d9eaff!important;border-color:#73a9ec!important}
+
+
+/* Reliable mobile PDF handoff */
+.mobile-pdf-ready{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(15,25,19,.55);backdrop-filter:blur(5px)}
+.mobile-pdf-card{width:min(100%,390px);padding:24px;border-radius:18px;background:#fff;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.24)}
+.mobile-pdf-card>svg{color:#315d43}.mobile-pdf-card h3{margin:10px 0 4px}.mobile-pdf-card p{margin:0 0 18px;color:#66736a;font-size:12px;overflow-wrap:anywhere}
+.mobile-pdf-card a{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:9px;text-decoration:none}
+.mobile-pdf-card button{width:100%;margin-top:8px}
